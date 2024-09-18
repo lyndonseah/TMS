@@ -1,0 +1,61 @@
+.user-profile {
+  width: 80%;
+  padding-left: 2rem;
+  background-color: #fff;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.user-details {
+  font-size: larger;
+}
+
+.user-details h2,
+.update-email h2,
+.update-password h2 {
+  text-decoration: underline;
+}
+
+.update-email,
+.update-password {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding-top: 20px;
+}
+
+input[type="email"],
+input[type="password"] {
+  width: 80%;
+  max-width: 300px;
+  padding: 10px;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  display: block;
+  width: 50%;
+  max-width: 200px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.ToastContainer {
+  font-size: 1rem;
+}

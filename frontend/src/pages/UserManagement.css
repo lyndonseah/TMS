@@ -1,0 +1,221 @@
+/* General Styles */
+.user-management {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin: 20px;
+}
+
+/* Create User Section */
+.create-user-section h2 {
+  margin-bottom: 1rem;
+}
+
+.create-user-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Adjust 'Active' column width */
+.create-user-table th:nth-child(4),
+.create-user-table td:nth-child(4) {
+  width: 80px;
+}
+
+.create-user-table th,
+.create-user-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.create-user-table th {
+  background-color: #f2f2f2;
+}
+
+/* Standardize input and select styles */
+.create-user-table input,
+.create-user-table select,
+.create-user-table .select-active,
+.create-user-table .css-yk16xz-control {
+  width: 100%;
+  max-width: 100%; /* Ensure inputs don't exceed cell width */
+  height: 2rem;
+  margin: 0;
+  border: 1px solid #333; /* Standardized border */
+  border-radius: 4px;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+/* Adjust 'Active' select dropdown width */
+.create-user-table .select-active {
+  max-width: 70px;
+}
+
+/* Center the 'Create User' button */
+.create-user-table button {
+  margin: 0 auto;
+  display: inline-block;
+}
+
+/* Display Users Section */
+.display-users-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.display-users-section h2 {
+  margin-bottom: 1rem;
+}
+
+.display-users-section > button {
+  align-self: flex-end;
+  margin-bottom: 1rem;
+}
+
+.display-users-section table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Adjust 'Active' column width */
+.display-users-section table th:nth-child(4),
+.display-users-section table td:nth-child(4) {
+  width: 80px;
+}
+
+.display-users-section table th,
+.display-users-section table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.display-users-section table th {
+  background-color: #f2f2f2;
+}
+
+/* Standardize input and select styles */
+.display-users-section table input,
+.display-users-section table select,
+.display-users-section table .select-active,
+.display-users-section table .css-yk16xz-control {
+  width: 100%;
+  max-width: 100%; /* Ensure inputs don't exceed cell width */
+  height: 2rem;
+  margin: 0;
+  border: 1px solid #333; /* Standardized border */
+  border-radius: 4px;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+/* Adjust 'Active' select dropdown width */
+.display-users-section table select {
+  max-width: 70px;
+}
+
+/* Center the 'Edit' and action buttons */
+.display-users-section table button {
+  margin: 0 auto;
+  display: inline-block;
+}
+
+/* Buttons */
+button {
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.modal-buttons button:last-child {
+  background-color: white;
+  color: #007bff;
+  border: 1px solid #007bff;
+}
+
+.modal-buttons button:last-child:hover {
+  background-color: #e6e6e6; /* Light gray on hover */
+}
+
+/* Cancel Buttons in the Display Users Section */
+.display-users-section table td button + button {
+  background-color: white;
+  color: #007bff;
+  border: 1px solid #007bff;
+}
+
+.display-users-section table td button + button:hover {
+  background-color: #e6e6e6; /* Light gray on hover */
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.modal {
+  background-color: #fff;
+  padding: 20px;
+  margin: 5% auto;
+  width: 40%;
+  border-radius: 5px;
+  position: relative;
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.modal input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #333; /* Standardized border */
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .create-user-table th,
+  .create-user-table td,
+  .display-users-section table th,
+  .display-users-section table td {
+    padding: 6px;
+  }
+
+  .modal {
+    width: 80%;
+  }
+}
+
+.ToastContainer {
+  font-size: 1rem;
+}
+
+.Toastify__toast {
+  border: 1px solid black;
+  border-radius: 4px; 
+}

@@ -1,0 +1,39 @@
+import React from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import "./Dropdown.css";
+
+function Dropdown({ isAdmin }) {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:3007/api/logout", { withCredentials: true });
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  return (
+    <div className="dropdown">
+      <ul>
+        <li>
+          <Link to="/profile">View/Edit Profile</Link>
+        </li>
+        {isAdmin && (
+          <li>
+            <Link to="/management">User Management</Link>
+          </li>
+        )}
+        <li>
+          <Link to="/login" onClick={handleLogout}>
+            Logout
+          </Link>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+export default Dropdown;
