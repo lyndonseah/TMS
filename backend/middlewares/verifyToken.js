@@ -1,8 +1,7 @@
-const pool = require("../config/database");
 const jwt = require("jsonwebtoken");
 const ErrorHandler = require("../utils/errorHandler");
 
-exports.verifyToken = async (req, res, next) => {
+exports.verifyTokenAccess = async (req, res, next) => {
   // get the token inside the cookie
   const token = req.cookies.token; //.token is a name set in authController
 

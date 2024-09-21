@@ -7,7 +7,7 @@ import "./UserProfile.css";
 import Navbar from "../components/Navbar";
 
 const UserProfile = () => {
-  const [userDetails, setUserDetails] = useState({ username: "", email: "", isAdmin: false });
+  const [userDetails, setUserDetails] = useState({ username: "", email: "", isAuthorized: false });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -15,7 +15,7 @@ const UserProfile = () => {
     const initializeUserProfile = async () => {
       try {
         const data = await fetchUserDetails();
-        setUserDetails({ username: data.user.username, email: data.user.email, isAdmin: data.isAdmin });
+        setUserDetails({ username: data.user.username, email: data.user.email, isAuthorized: data.isAuthorized });
       } catch (error) {
         toast.error("Failed to fetch user details");
       }
@@ -38,19 +38,14 @@ const UserProfile = () => {
       const response = await axios.patch("http://localhost:3007/api/users/update-email", { newEmail: email }, { withCredentials: true });
       if (response.data.success) {
         setUserDetails(prevState => ({ ...prevState, email }));
-        setEmail(""); // not tested yet
+        setEmail("");
         toast.success("Email has been updated");
       }
     } catch (error) {
       if (error.response && error.response.data) {
-        const { error: errorCode, message } = error.response.data;
-        if (errorCode === "EMAIL_TAKEN") {
-          toast.error("Email already exists.");
-        } else {
-          toast.error(message || "Failed to update email.");
-        }
+        toast.error(error.response.data.message);
       } else {
-        toast.error("Failed to update email.");
+        toast.error("Failed to assign group.");
       }
     }
   };
@@ -71,13 +66,17 @@ const UserProfile = () => {
         toast.success("Password has been updated");
       }
     } catch (error) {
-      toast.error("Password fail to update");
+      if (error.response && error.response.data) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to assign group.");
+      }
     }
   };
 
   return (
     <div>
-      <Navbar username={userDetails.username} isAdmin={userDetails.isAdmin} title="USER PROFILE" />
+      <Navbar username={userDetails.username} isAuthorized={userDetails.isAuthorized} title="USER PROFILE" />
       <div className="user-profile">
         <div className="user-details">
           <h2>User Details</h2>

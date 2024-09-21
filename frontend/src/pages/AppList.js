@@ -5,13 +5,13 @@ import Navbar from "../components/Navbar";
 import "./AppList.css";
 
 function AppList() {
-  const [userDetails, setUserDetails] = useState({ username: "", isAdmin: false });
+  const [userDetails, setUserDetails] = useState({ username: "", isAuthorized: false });
 
   useEffect(() => {
     const initializeUserProfile = async () => {
       try {
         const data = await fetchUserDetails();
-        setUserDetails({ username: data.user.username, isAdmin: data.isAdmin });
+        setUserDetails({ username: data.user.username, isAuthorized: data.isAuthorized });
       } catch (error) {
         console.log(error);
       }
@@ -22,7 +22,7 @@ function AppList() {
 
   return (
     <div>
-      <Navbar username={userDetails.username} isAdmin={userDetails.isAdmin} title="APP LIST" />
+      <Navbar username={userDetails.username} isAuthorized={userDetails.isAuthorized} title="APP LIST" />
       <div className="content">
         <p>This area will display apps in future sprints.</p>
       </div>

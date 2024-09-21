@@ -9,6 +9,8 @@
 /* Create User Section */
 .create-user-section h2 {
   margin-bottom: 1rem;
+  color: black;
+  text-decoration: underline;
 }
 
 .create-user-table {
@@ -217,5 +219,5 @@ button:disabled {
 
 .Toastify__toast {
   border: 1px solid black;
-  border-radius: 4px; 
+  border-radius: 4px;
 }

@@ -3,7 +3,7 @@ import Dropdown from './Dropdown';
 import './Navbar.css';
 import profileIcon from '../assets/profile_icon.png';
 
-function Navbar({ username, isAdmin, title }) {
+function Navbar({ username, isAuthorized, title }) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -11,7 +11,7 @@ function Navbar({ username, isAdmin, title }) {
             <h1>{title}</h1>
             <div className="profile-section" onMouseOver={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
                 {username} <img src={profileIcon} alt="Profile Icon" />
-                {isOpen && <Dropdown isAdmin={isAdmin} />}
+                {isOpen && <Dropdown isAuthorized={isAuthorized} />}
             </div>
         </div>
     );

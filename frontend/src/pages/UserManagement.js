@@ -11,7 +11,7 @@ import "./UserManagement.css";
 
 function UserManagement() {
   const navigate = useNavigate();
-  const [userDetails, setUserDetails] = useState({ username: "", isAdmin: false });
+  const [userDetails, setUserDetails] = useState({ username: "", isAuthorized: false });
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -36,7 +36,7 @@ function UserManagement() {
   async function checkUserAdmin() {
     try {
       const data = await fetchUserDetails();
-      if (!data.isAdmin) {
+      if (!data.isAuthorized) {
         forceLogout();
       }
     } catch (error) {
@@ -49,12 +49,12 @@ function UserManagement() {
       try {
         const data = await fetchUserDetails();
 
-        if (!data.isAdmin) {
+        if (!data.isAuthorized) {
           forceLogout();
           return;
         }
 
-        setUserDetails({ username: data.user.username, isAdmin: data.isAdmin });
+        setUserDetails({ username: data.user.username, isAuthorized: data.isAuthorized });
         await fetchGroups();
         fetchAllUsers();
       } catch (error) {
@@ -98,7 +98,6 @@ function UserManagement() {
         toast.error("No users found or request failed.");
       }
     } catch (error) {
-      console.error(error);
       toast.error("Failed to fetch user details.");
     }
   };
@@ -108,7 +107,6 @@ function UserManagement() {
       const groupResponse = await axios.get("http://localhost:3007/api/groups", { withCredentials: true });
       setGroups(groupResponse.data.rows.map(group => ({ label: group.group_name, value: group.group_id })));
     } catch (error) {
-      console.log(error);
       toast.error("Failed to fetch groups.");
     }
   };
@@ -129,11 +127,11 @@ function UserManagement() {
 
     setIsSubmitting(true);
     try {
-      const createUserResponse = await axios.post("http://localhost:3007/api/users/create", { username, password, email }, { withCredentials: true });   
-      
+      const createUserResponse = await axios.post("http://localhost:3007/api/users/create", { username, password, email }, { withCredentials: true });
+      console.log(createUserResponse.data);
       if (selectedGroups.length > 0) {
-          await axios.patch("http://localhost:3007/api/groups/assign", { username: createUserResponse.data.username, group_names: selectedGroups.map(group => group.label) }, { withCredentials: true });
-        }
+        await axios.patch("http://localhost:3007/api/groups/assign", { username: createUserResponse.data.username, group_names: selectedGroups.map(group => group.label) }, { withCredentials: true });
+      }
 
       toast.success("User created successfully.");
       fetchAllUsers();
@@ -141,17 +139,9 @@ function UserManagement() {
       setPassword("");
       setEmail("");
       setSelectedGroups([]);
-      
     } catch (error) {
       if (error.response && error.response.data) {
-        const { error: errorCode, message } = error.response.data;
-        if (errorCode === "USERNAME_TAKEN") {
-          toast.error("Username already exists, choose another.");
-        } else if (errorCode === "EMAIL_TAKEN") {
-          toast.error("Email already exists, choose another.");
-        } else {
-          toast.error(message || "Failed to create user.");
-        }
+        toast.error(error.response.data.message);
       } else {
         toast.error("Failed to create user.");
       }
@@ -183,14 +173,9 @@ function UserManagement() {
       }
     } catch (error) {
       if (error.response && error.response.data) {
-        const { error: errorCode, message } = error.response.data;
-        if (errorCode === "GROUP_TAKEN") {
-          toast.error("Group name already exists.");
-        } else {
-          toast.error(message || "Failed to create user.");
-        }
+        toast.error(error.response.data.message);
       } else {
-        toast.error("Failed to create user.");
+        toast.error("Failed to create group.");
       }
     }
   };
@@ -219,8 +204,6 @@ function UserManagement() {
     checkUserAdmin();
 
     setIsSubmitting(true);
-    let errorLog = [];
-    let nothingLog = 0;
     const changes = {};
 
     if (user.password && user.password !== originalUserData.password) {
@@ -247,12 +230,13 @@ function UserManagement() {
 
         await axios.patch("http://localhost:3007/api/users/reset", data, { withCredentials: true });
         toast.success("Password and/or Email updated successfully.");
-        nothingLog = 0;
       }
-      nothingLog++;
     } catch (error) {
-      toast.error(error.response?.data?.error === "PW_REQ_FAIL" ? "Password must be 8-10 characters and include at least one alphabet, one number, and one special character." : error.response?.data?.error === "EMAIL_TAKEN" ? "Email already in use." : null);
-      errorLog.push("Password/Email update failed.");
+      if (error.response && error.response.data) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to create user.");
+      }
     }
 
     try {
@@ -266,11 +250,13 @@ function UserManagement() {
           { withCredentials: true }
         );
         toast.success("User have been disabled successfully.");
-        nothingLog = 0;
       }
-      nothingLog++;
     } catch (error) {
-      errorLog.push("Active status update failed.");
+      if (error.response && error.response.data) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to disable user.");
+      }
     }
 
     try {
@@ -284,19 +270,13 @@ function UserManagement() {
           { withCredentials: true }
         );
         toast.success("Group(s) assigned successfully.");
-        nothingLog = 0;
       }
-      nothingLog++;
     } catch (error) {
-      errorLog.push("Assigning of group(s) failed.");
-    }
-
-    if (nothingLog === 3) {
-      toast.info("No changes has been made.");
-    }
-
-    if (errorLog.length > 0) {
-      toast.error(errorLog.join(" "));
+      if (error.response && error.response.data) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to assign group.");
+      }
     }
 
     fetchAllUsers();
@@ -312,7 +292,7 @@ function UserManagement() {
 
   return (
     <div>
-      <Navbar username={userDetails.username} isAdmin={userDetails.isAdmin} title="USER MANAGEMENT" />
+      <Navbar username={userDetails.username} isAuthorized={userDetails.isAuthorized} title="USER MANAGEMENT" />
       <div className="user-management">
         <div className="create-user-section">
           <h2>Create New User</h2>
@@ -448,7 +428,9 @@ function UserManagement() {
                         <button onClick={handleCancel}>Cancel</button>
                       </>
                     ) : (
-                      <button onClick={() => handleEdit(user.username)}>Edit</button>
+                      user.username !== 'Admin' && (
+                        <button onClick={() => handleEdit(user.username)}>Edit</button>
+                      )
                     )}
                   </td>
                 </tr>

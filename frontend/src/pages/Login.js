@@ -30,7 +30,7 @@ const Login = () => {
 
       if (response.data.success) {
         console.log(response.data);
-        navigate("/applist", { state: { isAdmin: response.data.isAdmin } });
+        navigate("/applist");
       }
     } catch (error) {
       console.log(error.response || error);

@@ -3,7 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import "./Dropdown.css";
 
-function Dropdown({ isAdmin }) {
+function Dropdown({ isAuthorized }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -21,7 +21,7 @@ function Dropdown({ isAdmin }) {
         <li>
           <Link to="/profile">View/Edit Profile</Link>
         </li>
-        {isAdmin && (
+        {isAuthorized && (
           <li>
             <Link to="/management">User Management</Link>
           </li>

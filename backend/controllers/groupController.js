@@ -1,6 +1,6 @@
 const pool = require("../config/database");
 const ErrorHandler = require("../utils/errorHandler");
-const { checkGroup } = require("./userController");
+const { checkGroup } = require("./authController");
 
 // Controller to get a user's group
 exports.getUserGroup = async (req, res, next) => {
@@ -8,9 +8,9 @@ exports.getUserGroup = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAdmin = await checkGroup(req.user.username, "Admin");
+  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
 
-  if (!isAdmin) {
+  if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
   }
 
@@ -20,13 +20,13 @@ exports.getUserGroup = async (req, res, next) => {
     const [rows] = await pool.execute("SELECT gl.group_name FROM user_group ug JOIN group_list gl ON ug.group_id = gl.group_id WHERE ug.username = ?", [username]);
 
     if (rows.length === 0) {
-      return res.status(200).json({ success: true, isAdmin, groups: [], message: "No groups assigned." });
+      return res.status(200).json({ success: true, groups: [], message: "No groups assigned." });
     }
 
     const groups = rows.map(row => row.group_name);
-    res.status(200).json({ success: true, isAdmin, groups });
+    res.status(200).json({ success: true, groups, message: "User's group(s) fetched successfully." });
   } catch (error) {
-    return next(new ErrorHandler("Failed to get user's group(s).", 500));
+    return next(new ErrorHandler("Failed to fetch user's group(s).", 500));
   }
 };
 
@@ -36,9 +36,9 @@ exports.getGroups = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAdmin = await checkGroup(req.user.username, "Admin");
+  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
 
-  if (!isAdmin) {
+  if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
   }
 
@@ -46,12 +46,12 @@ exports.getGroups = async (req, res, next) => {
     const [rows] = await pool.execute("SELECT * FROM group_list");
 
     if (rows.length > 0) {
-      res.json({ rows, success: true, isAdmin: isAdmin });
+      res.status(200).json({ rows, success: true, message: "Group(s) fetched successfully." });
     } else {
-      return next(new ErrorHandler("No groups found.", 404));
+      return next(new ErrorHandler("No group(s) found.", 404));
     }
   } catch (error) {
-    return next(new ErrorHandler("Failed to get groups.", 500));
+    return next(new ErrorHandler("Failed to fetch group(s).", 500));
   }
 };
 
@@ -61,29 +61,29 @@ exports.createGroup = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAdmin = await checkGroup(req.user.username, "Admin");
+  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
 
-  if (!isAdmin) {
+  if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
   }
 
   const { group_name } = req.body;
 
   if (!group_name) {
-    return next(new ErrorHandler("Group name cannot be empty.", 400));
+    return res.status(400).json({ message: "Group name cannot be empty." });
   }
 
   const groupNameRegex = /^[A-Za-z0-9_]+$/;
   if (!groupNameRegex.test(group_name)) {
-    return next(new ErrorHandler("Group name must contain only letters, numbers, and underscores.", 400));
+    return res.status(400).json({ message: "Group name can only be alphanumeric and/or underscores." });
   }
 
   try {
     const [rows] = await pool.execute("INSERT INTO group_list (group_name) VALUES (?)", [group_name]);
-    res.status(201).json({ id: rows.insertId, message: `Group '${group_name}' created successfully.`, success: true, isAdmin: isAdmin });
+    res.status(201).json({ id: rows.insertId, message: `Group '${group_name}' created successfully.`, success: true });
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ error: "GROUP_TAKEN", message: "Group already exists." });
+      return res.status(409).json({ message: "Group already exists." });
     } else {
       return next(new ErrorHandler("Failed to create group.", 500));
     }
@@ -96,9 +96,9 @@ exports.assignGroup = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAdmin = await checkGroup(req.user.username, "Admin");
+  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
 
-  if (!isAdmin) {
+  if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
   }
 
@@ -128,9 +128,8 @@ exports.assignGroup = async (req, res, next) => {
     }
 
     await pool.query("COMMIT;");
-    res.status(201).json({ message: `User '${username}' has been assigned group(s) successfully.`, success: true });
+    res.status(201).json({ message: `User '${username}' has been assigned to group(s) successfully.`, success: true });
   } catch (error) {
-    console.log(error);
     await pool.query("ROLLBACK;");
     return next(new ErrorHandler("Failed to update group assignments, transaction rolled back.", 500));
   }

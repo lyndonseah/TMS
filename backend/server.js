@@ -2,9 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const userRoute = require("./routes/userRoute");
-const groupRoute = require("./routes/groupRoute");
-const authRoute = require("./routes/authRoute");
+const tmsRoute = require("./routes/tmsRoute");
 const errorMiddleware = require("./middlewares/errors");
 
 dotenv.config({ path: "./config/config.env" });
@@ -20,9 +18,7 @@ app.use(
   })
 );
 
-app.use("/api", userRoute);
-app.use("/api", groupRoute);
-app.use("/api", authRoute);
+app.use("/api", tmsRoute);
 
 app.use(errorMiddleware);
 

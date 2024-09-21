@@ -2,7 +2,21 @@ const pool = require("../config/database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const ErrorHandler = require("../utils/errorHandler");
-const { checkGroup } = require("./userController");
+
+async function checkGroup(username, group_name) {
+  const [rows] = await pool.query(
+    `SELECT 1 FROM user_group ug JOIN group_list gl 
+    ON ug.group_id = gl.group_id WHERE ug.username = ? 
+    AND gl.group_name IN (?) LIMIT 1`,
+    [username, group_name]
+  );
+
+  if (rows.length === 0) {
+    return false;
+  }
+
+  return true;
+}
 
 exports.login = async (req, res, next) => {
   const { username, password } = req.body;
@@ -25,7 +39,7 @@ exports.login = async (req, res, next) => {
       return next(new ErrorHandler("Invalid credentials.", 400));
     }
 
-    const isAdmin = await checkGroup(username, "Admin");
+    const isAuthorized = await checkGroup(username, ["Admin"]);
 
     // Generate token
     const token = jwt.sign(
@@ -33,7 +47,7 @@ exports.login = async (req, res, next) => {
         username: username,
         ipaddress: req.ip,
         browser: req.headers["user-agent"],
-        isAdmin: isAdmin
+        isAuthorized: isAuthorized
       },
       process.env.JWT_SECRET,
       {
@@ -50,7 +64,7 @@ exports.login = async (req, res, next) => {
     res.status(200).cookie("token", token, options).json({
       message: "Login success.",
       success: true,
-      isAdmin: isAdmin,
+      isAuthorized: isAuthorized,
       token
     });
   } catch (error) {
@@ -61,3 +75,5 @@ exports.login = async (req, res, next) => {
 exports.logout = async (req, res) => {
   res.clearCookie("token").status(200).send({ message: "Logout success." });
 };
+
+module.exports.checkGroup = checkGroup;
