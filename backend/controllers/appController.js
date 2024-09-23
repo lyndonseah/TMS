@@ -8,8 +8,13 @@ exports.getApp = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const { app_acronym } = req.body;
+
+  if (!app_acronym) {
+    return res.status(400).json({ message: "App_Acronym must be provided." });
+  }
+
   try {
-    const { app_acronym } = req.body;
     const [rows] = await pool.execute(`SELECT * FROM application WHERE app_acronym = ?`, [app_acronym]);
 
     if (rows.length === 0) {
@@ -29,12 +34,14 @@ exports.getApps = async (req, res, next) => {
   }
 
   try {
-    const [rows] = await pool.execute("SELECT * FROM application");
+    const [rows] = await pool.execute(`SELECT * FROM application`);
+
     if (rows.length > 0) {
-      res.status(200).json({ success: true, rows, message: "Application(s) fetched successfully."  });
+      res.status(200).json({ success: true, rows, message: "Application(s) fetched successfully." });
     } else {
       return res.status(404).json({ message: "No application(s) found." });
     }
+
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch application(s)." });
   }
@@ -55,7 +62,7 @@ exports.createApp = async (req, res, next) => {
   const { app_acronym, app_description, app_rNumber, app_startDate, app_endDate, app_permitCreate, app_permitOpen, app_permitToDoList, app_permitDoing, app_permitDone } = req.body;
 
   if (!app_acronym || !app_rNumber || !app_startDate || !app_endDate) {
-    return res.status(400).json({ message: "App_Acronym, App_Rnumber, App_startDate, and App_endDate are mandatory fields." });
+    return res.status(400).json({ message: "App_Acronym, App_Rnumber, App_Startdate, and App_Enddate are mandatory fields." });
   }
 
   if (app_rNumber <= 0) {
@@ -67,7 +74,8 @@ exports.createApp = async (req, res, next) => {
   }
 
   try {
-    const [acronymRows] = await pool.execute("SELECT app_acronym FROM application WHERE app_acronym = ?", [app_acronym]);
+    const [acronymRows] = await pool.execute(`SELECT app_acronym FROM application WHERE app_acronym = ?`, [app_acronym]);
+    
     if (acronymRows.length > 0) {
       return res.status(409).json({ message: "App_Acronym already taken." });
     }
@@ -111,7 +119,7 @@ exports.editApp = async (req, res, next) => {
     );
 
     if (rows.affectedRows === 0) {
-      return res.status(404).json({ message: "Application not found." });
+      return res.status(404).json({ message: "No edit performed or application not found." });
     }
 
     res.status(200).json({ success: true, message: `Application '${app_acronym}' has been edited successfully.` });

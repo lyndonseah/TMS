@@ -1,9 +1,9 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import AppList from './pages/AppList';
-import UserProfile from './pages/UserProfile';
-import UserManagement from './pages/UserManagement';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import AppList from "./pages/AppList";
+import UserProfile from "./pages/UserProfile";
+import UserManagement from "./pages/UserManagement";
 
 function App() {
   return (

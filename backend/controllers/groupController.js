@@ -79,14 +79,17 @@ exports.createGroup = async (req, res, next) => {
   }
 
   try {
+    const [groupRows] = await pool.execute("SELECT group_name FROM group_list WHERE group_name = ?", [group_name]);
+
+    if (groupRows.length > 0) {
+      return res.status(409).json({ message: "Group already exists, choose another." });
+    }
+
     const [rows] = await pool.execute("INSERT INTO group_list (group_name) VALUES (?)", [group_name]);
+
     res.status(201).json({ id: rows.insertId, message: `Group '${group_name}' created successfully.`, success: true });
   } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ message: "Group already exists." });
-    } else {
-      return next(new ErrorHandler("Failed to create group.", 500));
-    }
+    return next(new ErrorHandler("Failed to create group.", 500));
   }
 };
 

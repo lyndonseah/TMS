@@ -14,15 +14,16 @@ exports.getUser = async (req, res, next) => {
 
   const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
 
+  const username = req.user.username;
+
   try {
-    const username = req.user.username;
     const [rows] = await pool.execute("SELECT username, email FROM users WHERE username = ?", [username]);
 
     if (rows.length === 0) {
       return next(new ErrorHandler("User not found", 404));
     }
 
-    res.status(200).json({ success: true, user: rows[0], isAuthorized: isAuthorized, message: "User's details fetched successfully."  });
+    res.status(200).json({ success: true, user: rows[0], isAuthorized: isAuthorized, message: "User's details fetched successfully." });
   } catch (error) {
     return next(new ErrorHandler("Failed to fetch user's details.", 500));
   }
@@ -42,11 +43,13 @@ exports.getUsers = async (req, res, next) => {
 
   try {
     const [rows] = await pool.execute("SELECT username, email, active FROM users");
+    
     if (rows.length > 0) {
       res.status(200).json({ success: true, rows, message: "User(s) fetched successfully." });
     } else {
       return next(new ErrorHandler("No user(s) found.", 404));
     }
+    
   } catch (error) {
     return next(new ErrorHandler("Failed to fetch all user(s).", 500));
   }
