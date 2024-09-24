@@ -428,9 +428,7 @@ function UserManagement() {
                         <button onClick={handleCancel}>Cancel</button>
                       </>
                     ) : (
-                      user.username !== 'Admin' && (
-                        <button onClick={() => handleEdit(user.username)}>Edit</button>
-                      )
+                      user.username !== "Admin" && <button onClick={() => handleEdit(user.username)}>Edit</button>
                     )}
                   </td>
                 </tr>

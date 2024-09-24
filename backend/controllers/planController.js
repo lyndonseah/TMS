@@ -39,19 +39,25 @@ exports.getPlans = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["PL", "PM"]);
+  // const isAuthorized = await checkGroup(req.user.username, ["PL", "PM"]);
 
-  if (!isAuthorized) {
-    return res.status(403).json({ message: "Access denied. Insufficient permissions." });
+  // if (!isAuthorized) {
+  //   return res.status(403).json({ message: "Access denied. Insufficient permissions." });
+  // }
+
+  const { plan_appAcronym } = req.body;
+
+  if (!plan_appAcronym) {
+    return res.status(400).json({ message: "Plan_App_Acronym must be provided." });
   }
 
   try {
-    const [rows] = await pool.execute(`SELECT * FROM plan`);
+    const [rows] = await pool.execute(`SELECT * FROM plan WHERE plan_appAcronym = ?`, [plan_appAcronym]);
 
     if (rows.length > 0) {
       res.status(200).json({ success: true, rows, message: "Plan(s) fetched successfully." });
     } else {
-      return res.status(404).json({ message: "No plan(s) found." });
+      return res.status(200).json({ sucess: true, rows, message: "No plan(s) found." });
     }
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch plan(s)." });
@@ -82,7 +88,7 @@ exports.createPlan = async (req, res, next) => {
 
   try {
     const [acronymRows] = await pool.execute(`SELECT app_acronym FROM application WHERE app_acronym = ?`, [app_acronym]);
-    
+
     if (acronymRows.length === 0) {
       return res.status(404).json({ message: "App_Acronym does not exist." });
     }

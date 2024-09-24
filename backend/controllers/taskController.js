@@ -34,25 +34,6 @@ exports.getTask = async (req, res, next) => {
   }
 };
 
-// Get all tasks
-// exports.getTasks = async (req, res, next) => {
-//   if (!req.user) {
-//     return res.status(401).json({ message: "Authentication required." });
-//   }
-
-//   try {
-//     const [rows] = await pool.execute(`SELECT * FROM task`);
-
-//     if (rows.length > 0) {
-//       res.status(200).json({ success: true, rows, message: "Task(s) fetched successfully." });
-//     } else {
-//       return res.status(404).json({ message: "No task(s) found." });
-//     }
-//   } catch (error) {
-//     return res.status(500).json({ message: "Failed to fetch task(s)." });
-//   }
-// };
-
 // Get tasks by state (to display one by one, each column)
 exports.getTasksByState = async (req, res, next) => {
   if (!req.user) {
@@ -75,7 +56,7 @@ exports.getTasksByState = async (req, res, next) => {
     );
 
     if (rows.length === 0) {
-      res.status(200).json({ success: true, rows, message: "No task(s) in this state." });
+      return res.status(200).json({ success: true, rows, message: "No task(s) in this state." });
     }
 
     res.status(200).json({ sucess: true, rows, message: "Task(s) fetched successfully." });
@@ -89,7 +70,7 @@ exports.createTask = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
   }
-  
+
   // THIS WILL BE AUTHORIZED FOR APP_PERMIT_CREATE
   // const isAuthorized = await checkGroup(req.user.username, ["PL"]);
 
@@ -346,7 +327,7 @@ exports.updateNotes = async (req, res, next) => {
       return res.status(404).json({ message: "No update performed or task not found." });
     }
 
-    res.status(200).json({ success: true, message: "Task notes updated successfully." })
+    res.status(200).json({ success: true, message: "Task notes updated successfully." });
   } catch (error) {
     return res.status(500).json({ message: "Failed to update notes." });
   }

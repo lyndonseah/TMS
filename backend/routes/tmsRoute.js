@@ -35,20 +35,20 @@ router.patch("/apps/edit", verifyToken.verifyTokenAccess, appController.editApp)
 
 // Plan Controller Routes
 router.post("/plan", verifyToken.verifyTokenAccess, planController.getPlan);
-router.get("/plans", verifyToken.verifyTokenAccess, planController.getPlans);
+router.post("/plans", verifyToken.verifyTokenAccess, planController.getPlans);
 router.post("/plans/create", verifyToken.verifyTokenAccess, planController.createPlan);
 router.put("/plans/edit", verifyToken.verifyTokenAccess, planController.editPlan);
 
 // Task Controller Routes
-router.post("/task", verifyToken.verifyTokenAccess, taskController.getTask)
-router.post("/tasks", verifyToken.verifyTokenAccess, taskController.getTasksByState)
-router.post("/tasks/create", verifyToken.verifyTokenAccess, taskController.createTask)
-router.patch("/tasks/promote-open-todo", verifyToken.verifyTokenAccess, taskController.promoteTask2ToDo)
-router.patch("/tasks/promote-todo-doing", verifyToken.verifyTokenAccess, taskController.promoteTask2Doing)
-router.patch("/tasks/demote-doing-todo", verifyToken.verifyTokenAccess, taskController.demoteTask2ToDo)
-router.patch("/tasks/promote-doing-done", verifyToken.verifyTokenAccess, taskController.promoteTask2Done)
-router.patch("/tasks/promote-done-close", verifyToken.verifyTokenAccess, taskController.promoteTask2Close)
-router.patch("/tasks/demote-done-doing", verifyToken.verifyTokenAccess, taskController.demoteTask2Doing)
-router.patch("/tasks/update-notes", verifyToken.verifyTokenAccess, taskController.updateNotes)
+router.post("/task", verifyToken.verifyTokenAccess, taskController.getTask);
+router.post("/tasks", verifyToken.verifyTokenAccess, taskController.getTasksByState);
+router.post("/tasks/create", verifyToken.verifyTokenAccess, taskController.createTask);
+router.patch("/tasks/promote-open-todo", verifyToken.verifyTokenAccess, taskController.promoteTask2ToDo);
+router.patch("/tasks/promote-todo-doing", verifyToken.verifyTokenAccess, taskController.promoteTask2Doing);
+router.patch("/tasks/demote-doing-todo", verifyToken.verifyTokenAccess, taskController.demoteTask2ToDo);
+router.patch("/tasks/promote-doing-done", verifyToken.verifyTokenAccess, taskController.promoteTask2Done);
+router.patch("/tasks/promote-done-close", verifyToken.verifyTokenAccess, taskController.promoteTask2Close);
+router.patch("/tasks/demote-done-doing", verifyToken.verifyTokenAccess, taskController.demoteTask2Doing);
+router.patch("/tasks/update-notes", verifyToken.verifyTokenAccess, taskController.updateNotes);
 
 module.exports = router;

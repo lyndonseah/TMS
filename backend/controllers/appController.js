@@ -41,7 +41,6 @@ exports.getApps = async (req, res, next) => {
     } else {
       return res.status(404).json({ message: "No application(s) found." });
     }
-
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch application(s)." });
   }
@@ -75,7 +74,7 @@ exports.createApp = async (req, res, next) => {
 
   try {
     const [acronymRows] = await pool.execute(`SELECT app_acronym FROM application WHERE app_acronym = ?`, [app_acronym]);
-    
+
     if (acronymRows.length > 0) {
       return res.status(409).json({ message: "App_Acronym already taken." });
     }
