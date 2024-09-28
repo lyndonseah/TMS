@@ -39,7 +39,7 @@ exports.login = async (req, res, next) => {
       return next(new ErrorHandler("Invalid credentials.", 400));
     }
 
-    const isAuthorized = await checkGroup(username, ["Admin"]);
+    const isAuthorized = await checkGroup(username, ["ADMIN"]);
 
     // Generate token
     const token = jwt.sign(

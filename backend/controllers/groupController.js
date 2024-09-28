@@ -8,13 +8,29 @@ exports.getUserGroup = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const { username } = req.body;
 
-  if (!isAuthorized) {
-    return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
+  try {
+    const [rows] = await pool.execute("SELECT gl.group_name FROM user_group ug JOIN group_list gl ON ug.group_id = gl.group_id WHERE ug.username = ?", [username]);
+
+    if (rows.length === 0) {
+      return res.status(200).json({ success: true, groups: [], message: "No groups assigned." });
+    }
+
+    const groups = rows.map(row => row.group_name);
+    res.status(200).json({ success: true, groups, message: "User's group(s) fetched successfully." });
+  } catch (error) {
+    return next(new ErrorHandler("Failed to fetch user's group(s).", 500));
+  }
+};
+
+// Controller to get your group
+exports.getSelfGroup = async (req, res, next) => {
+  if (!req.user) {
+    return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const { username } = req.body;
+  const username = req.user.username;
 
   try {
     const [rows] = await pool.execute("SELECT gl.group_name FROM user_group ug JOIN group_list gl ON ug.group_id = gl.group_id WHERE ug.username = ?", [username]);
@@ -36,12 +52,6 @@ exports.getGroups = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
-
-  if (!isAuthorized) {
-    return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
-  }
-
   try {
     const [rows] = await pool.execute("SELECT * FROM group_list");
 
@@ -61,7 +71,7 @@ exports.createGroup = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const isAuthorized = await checkGroup(req.user.username, ["ADMIN"]);
 
   if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
@@ -99,7 +109,7 @@ exports.assignGroup = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const isAuthorized = await checkGroup(req.user.username, ["ADMIN"]);
 
   if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));

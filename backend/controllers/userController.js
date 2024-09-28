@@ -12,7 +12,7 @@ exports.getUser = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const isAuthorized = await checkGroup(req.user.username, ["ADMIN"]);
 
   const username = req.user.username;
 
@@ -35,7 +35,7 @@ exports.getUsers = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const isAuthorized = await checkGroup(req.user.username, ["ADMIN"]);
 
   if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
@@ -43,13 +43,12 @@ exports.getUsers = async (req, res, next) => {
 
   try {
     const [rows] = await pool.execute("SELECT username, email, active FROM users");
-    
+
     if (rows.length > 0) {
       res.status(200).json({ success: true, rows, message: "User(s) fetched successfully." });
     } else {
       return next(new ErrorHandler("No user(s) found.", 404));
     }
-    
   } catch (error) {
     return next(new ErrorHandler("Failed to fetch all user(s).", 500));
   }
@@ -61,7 +60,7 @@ exports.createUser = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const isAuthorized = await checkGroup(req.user.username, ["ADMIN"]);
 
   if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
@@ -122,7 +121,7 @@ exports.disableUser = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required.", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const isAuthorized = await checkGroup(req.user.username, ["ADMIN"]);
   if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
   }
@@ -151,7 +150,7 @@ exports.resetCredentials = async (req, res, next) => {
     return next(new ErrorHandler("Authentication required", 401));
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["Admin"]);
+  const isAuthorized = await checkGroup(req.user.username, ["ADMIN"]);
 
   if (!isAuthorized) {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));

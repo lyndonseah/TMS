@@ -1,49 +1,11 @@
 const pool = require("../config/database");
 const { checkGroup } = require("./authController");
-const { validateDate } = require("../utils/dateCheck");
-
-// Get one plan
-exports.getPlan = async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Authentication required." });
-  }
-
-  const isAuthorized = await checkGroup(req.user.username, ["PL", "PM"]);
-
-  if (!isAuthorized) {
-    return res.status(403).json({ message: "Access denied. Insufficient permissions." });
-  }
-
-  const { plan_mvpName, plan_appAcronym } = req.body;
-
-  if (!plan_mvpName || !plan_appAcronym) {
-    return res.status(400).json({ message: "Plan_MVP_Name and Plan_App_Acronym must be provided." });
-  }
-
-  try {
-    const [rows] = await pool.execute(`SELECT * FROM plan WHERE plan_mvpName = ? AND plan_appAcronym = ?`, [plan_mvpName, plan_appAcronym]);
-
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Plan_MVP_Name/Plan_App_Acronym not found." });
-    }
-
-    res.status(200).json({ success: true, plan: rows[0], message: "Plan fetched successfully." });
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to fetch plan." });
-  }
-};
 
 // Get all plans
 exports.getPlans = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
   }
-
-  // const isAuthorized = await checkGroup(req.user.username, ["PL", "PM"]);
-
-  // if (!isAuthorized) {
-  //   return res.status(403).json({ message: "Access denied. Insufficient permissions." });
-  // }
 
   const { plan_appAcronym } = req.body;
 
@@ -70,7 +32,7 @@ exports.createPlan = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["PM"]);
+  const isAuthorized = await checkGroup(req.user.username, ["PROJECT_MANAGER"]);
 
   if (!isAuthorized) {
     return res.status(403).json({ message: "Access denied. Insufficient permissions." });
@@ -79,15 +41,11 @@ exports.createPlan = async (req, res, next) => {
   const { plan_mvpName, plan_startDate, plan_endDate, plan_appAcronym, plan_colour } = req.body;
 
   if (!plan_mvpName || !plan_startDate || !plan_endDate || !plan_appAcronym || !plan_colour) {
-    return res.status(400).json({ message: "Plan_MVP_Name, Plan_Startdate, Plan_Enddate, Plan_App_Acronym, and Plan_Colour are mandatory fields." });
-  }
-
-  if (!validateDate(plan_startDate) || !validateDate(plan_endDate)) {
-    return res.status(400).json({ message: "Date should be in valid DD-MM-YYYY format." });
+    return res.status(400).json({ message: "Plan_MVP_Name, Plan_Startdate, Plan_Enddate, and Plan_Colour are mandatory fields." });
   }
 
   try {
-    const [acronymRows] = await pool.execute(`SELECT app_acronym FROM application WHERE app_acronym = ?`, [app_acronym]);
+    const [acronymRows] = await pool.execute(`SELECT app_acronym FROM application WHERE app_acronym = ?`, [plan_appAcronym]);
 
     if (acronymRows.length === 0) {
       return res.status(404).json({ message: "App_Acronym does not exist." });
@@ -121,7 +79,7 @@ exports.editPlan = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
-  const isAuthorized = await checkGroup(req.user.username, ["PM"]);
+  const isAuthorized = await checkGroup(req.user.username, ["PROJECT_MANAGER"]);
 
   if (!isAuthorized) {
     return res.status(403).json({ message: "Access denied. Insufficient permissions." });
@@ -153,3 +111,34 @@ exports.editPlan = async (req, res, next) => {
     return res.status(500).json({ message: "Failed to edit plan." });
   }
 };
+
+// Get one plan
+// exports.getPlan = async (req, res, next) => {
+//   if (!req.user) {
+//     return res.status(401).json({ message: "Authentication required." });
+//   }
+
+//   const isAuthorized = await checkGroup(req.user.username, ["PL", "PM"]);
+
+//   if (!isAuthorized) {
+//     return res.status(403).json({ message: "Access denied. Insufficient permissions." });
+//   }
+
+//   const { plan_mvpName, plan_appAcronym } = req.body;
+
+//   if (!plan_mvpName || !plan_appAcronym) {
+//     return res.status(400).json({ message: "Plan_MVP_Name and Plan_App_Acronym must be provided." });
+//   }
+
+//   try {
+//     const [rows] = await pool.execute(`SELECT * FROM plan WHERE plan_mvpName = ? AND plan_appAcronym = ?`, [plan_mvpName, plan_appAcronym]);
+
+//     if (rows.length === 0) {
+//       return res.status(404).json({ message: "Plan_MVP_Name/Plan_App_Acronym not found." });
+//     }
+
+//     res.status(200).json({ success: true, plan: rows[0], message: "Plan fetched successfully." });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Failed to fetch plan." });
+//   }
+// };

@@ -19,6 +19,9 @@ function Dropdown({ isAuthorized }) {
     <div className="dropdown">
       <ul>
         <li>
+          <Link to="/applist">App List</Link>
+        </li>
+        <li>
           <Link to="/profile">View/Edit Profile</Link>
         </li>
         {isAuthorized && (

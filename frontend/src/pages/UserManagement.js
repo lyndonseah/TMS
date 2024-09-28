@@ -44,28 +44,6 @@ function UserManagement() {
     }
   }
 
-  useEffect(() => {
-    const initializeUserProfile = async () => {
-      try {
-        const data = await fetchUserDetails();
-
-        if (!data.isAuthorized) {
-          forceLogout();
-          return;
-        }
-
-        setUserDetails({ username: data.user.username, isAuthorized: data.isAuthorized });
-        await fetchGroups();
-        fetchAllUsers();
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to initialize page.");
-      }
-    };
-
-    initializeUserProfile();
-  }, [forceLogout]);
-
   const fetchAllUsers = async () => {
     try {
       const userResponse = await axios.get("http://localhost:3007/api/users", { withCredentials: true });
@@ -110,6 +88,28 @@ function UserManagement() {
       toast.error("Failed to fetch groups.");
     }
   };
+
+  useEffect(() => {
+    const initializeUserProfile = async () => {
+      try {
+        const data = await fetchUserDetails();
+
+        if (!data.isAuthorized) {
+          forceLogout();
+          return;
+        }
+
+        setUserDetails({ username: data.user.username, isAuthorized: data.isAuthorized });
+        await fetchGroups();
+        fetchAllUsers();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to initialize page.");
+      }
+    };
+
+    initializeUserProfile();
+  }, [forceLogout]);
 
   const handleCreateUser = async () => {
     checkUserAdmin();

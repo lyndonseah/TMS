@@ -23,24 +23,26 @@ router.patch("/users/update-password", verifyToken.verifyTokenAccess, userContro
 
 // Group Controller Routes
 router.post("/group", verifyToken.verifyTokenAccess, groupController.getUserGroup);
+router.get("/group/self", verifyToken.verifyTokenAccess, groupController.getSelfGroup);
 router.get("/groups", verifyToken.verifyTokenAccess, groupController.getGroups);
 router.post("/groups/create", verifyToken.verifyTokenAccess, groupController.createGroup);
 router.patch("/groups/assign", verifyToken.verifyTokenAccess, groupController.assignGroup);
 
 // App Controller Routes
-router.post("/app", verifyToken.verifyTokenAccess, appController.getApp);
+// router.post("/app", verifyToken.verifyTokenAccess, appController.getApp);
 router.get("/apps", verifyToken.verifyTokenAccess, appController.getApps);
+router.post("/apps/permit", verifyToken.verifyTokenAccess, appController.getPermitGroups);
 router.post("/apps/create", verifyToken.verifyTokenAccess, appController.createApp);
 router.patch("/apps/edit", verifyToken.verifyTokenAccess, appController.editApp);
 
 // Plan Controller Routes
-router.post("/plan", verifyToken.verifyTokenAccess, planController.getPlan);
+// router.post("/plan", verifyToken.verifyTokenAccess, planController.getPlan);
 router.post("/plans", verifyToken.verifyTokenAccess, planController.getPlans);
 router.post("/plans/create", verifyToken.verifyTokenAccess, planController.createPlan);
-router.put("/plans/edit", verifyToken.verifyTokenAccess, planController.editPlan);
+router.patch("/plans/edit", verifyToken.verifyTokenAccess, planController.editPlan);
 
 // Task Controller Routes
-router.post("/task", verifyToken.verifyTokenAccess, taskController.getTask);
+// router.post("/task", verifyToken.verifyTokenAccess, taskController.getTask);
 router.post("/tasks", verifyToken.verifyTokenAccess, taskController.getTasksByState);
 router.post("/tasks/create", verifyToken.verifyTokenAccess, taskController.createTask);
 router.patch("/tasks/promote-open-todo", verifyToken.verifyTokenAccess, taskController.promoteTask2ToDo);
@@ -49,6 +51,7 @@ router.patch("/tasks/demote-doing-todo", verifyToken.verifyTokenAccess, taskCont
 router.patch("/tasks/promote-doing-done", verifyToken.verifyTokenAccess, taskController.promoteTask2Done);
 router.patch("/tasks/promote-done-close", verifyToken.verifyTokenAccess, taskController.promoteTask2Close);
 router.patch("/tasks/demote-done-doing", verifyToken.verifyTokenAccess, taskController.demoteTask2Doing);
+router.patch("/tasks/update-plan", verifyToken.verifyTokenAccess, taskController.updateTaskPlan);
 router.patch("/tasks/update-notes", verifyToken.verifyTokenAccess, taskController.updateNotes);
 
 module.exports = router;
