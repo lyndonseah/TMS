@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { fetchUserDetails } from "../utils/fetchUserDetails";
+import { forceLogout } from "../utils/forceLogout";
 import "./UserProfile.css";
 import Navbar from "../components/Navbar";
 
 const UserProfile = () => {
+  const navigate = useNavigate();
   const [userDetails, setUserDetails] = useState({ username: "", email: "", isAuthorized: false });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,13 +19,17 @@ const UserProfile = () => {
       try {
         const data = await fetchUserDetails();
         setUserDetails({ username: data.user.username, email: data.user.email, isAuthorized: data.isAuthorized });
+        if (!data.user.active) {
+          await forceLogout(navigate);
+          return;
+        }
       } catch (error) {
         toast.error("Failed to fetch user details");
       }
     };
 
     initializeUserProfile();
-  }, []);
+  }, [navigate]);
 
   const validatePassword = password => {
     const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~!@#$%^&*-=_+,.]).{8,10}$/;
@@ -31,7 +38,7 @@ const UserProfile = () => {
 
   const handleUpdateEmail = async () => {
     if (!email) {
-      toast.error("Empty field!");
+      toast.error("Empty field!!");
       return;
     }
     try {

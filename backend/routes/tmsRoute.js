@@ -16,7 +16,7 @@ router.get("/logout", authController.logout);
 router.get("/user", verifyToken.verifyTokenAccess, userController.getUser);
 router.get("/users", verifyToken.verifyTokenAccess, userController.getUsers);
 router.post("/users/create", verifyToken.verifyTokenAccess, userController.createUser);
-router.patch("/users/disable", verifyToken.verifyTokenAccess, userController.disableUser);
+router.patch("/users/update-status", verifyToken.verifyTokenAccess, userController.updateUserStatus);
 router.patch("/users/reset", verifyToken.verifyTokenAccess, userController.resetCredentials);
 router.patch("/users/update-email", verifyToken.verifyTokenAccess, userController.updateEmail);
 router.patch("/users/update-password", verifyToken.verifyTokenAccess, userController.updatePassword);

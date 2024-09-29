@@ -5,9 +5,10 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Select from "react-select";
 import { parse, format } from "date-fns";
+import Select from "react-select";
 import { fetchUserDetails } from "../utils/fetchUserDetails";
+import { forceLogout } from "../utils/forceLogout";
 import Navbar from "../components/Navbar";
 import "./AppList.css";
 
@@ -69,6 +70,10 @@ function AppList() {
       try {
         const data = await fetchUserDetails();
         setUserDetails({ username: data.user.username, isAuthorized: data.isAuthorized });
+        if (!data.user.active) {
+          await forceLogout(navigate);
+          return;
+        }
         fetchApplications();
         await fetchSelfGroup();
       } catch (error) {
@@ -77,7 +82,7 @@ function AppList() {
     };
 
     initializeUserProfile();
-  }, []);
+  }, [navigate]);
 
   const isPermit = () => {
     return userGroups.includes("PROJECT_LEAD");

@@ -33,8 +33,11 @@ const Login = () => {
         navigate("/applist");
       }
     } catch (error) {
-      console.log(error.response || error);
-      toast.error("Invalid credentials");
+      if (error.response && error.response.data) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Invalid credentials.");
+      }
     }
   };
 

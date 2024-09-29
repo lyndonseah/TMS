@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const { checkGroup } = require("./authController");
+const nodemailer = require("nodemailer");
 
 const task_state = {
   open: "Open",
@@ -15,16 +16,16 @@ async function auditTrail(task_id, username, task_state, action, notes = "") {
 
   switch (action) {
     case "create":
-      auditEntry = `>${username} created the task, current task state at ${task_state}, at ${dateTime}`;
+      auditEntry = `>${username} created the task, current task state at ${task_state}, at ${dateTime}.`;
       break;
     case "promote":
-      auditEntry = `>${username} promoted the task, current task state at ${task_state}, at ${dateTime}`;
+      auditEntry = `>${username} promoted the task, current task state at ${task_state}, at ${dateTime}.`;
       break;
     case "demote":
-      auditEntry = `>${username} demoted the task, current task state at ${task_state}, at ${dateTime}`;
+      auditEntry = `>${username} demoted the task, current task state at ${task_state}, at ${dateTime}.`;
       break;
     case "update-plan":
-      auditEntry = `>${username} updated task plan when task state at ${task_state}, at ${dateTime}`;
+      auditEntry = `>${username} updated task plan when task state at ${task_state}, at ${dateTime}.`;
       break;
     case "update-notes":
       auditEntry = `>${username} updated task notes when task state at ${task_state}, at ${dateTime}.ͻNotes entry: "${notes}"`;
@@ -73,6 +74,11 @@ exports.getTasksByState = async (req, res, next) => {
 exports.createTask = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
+  }
+
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
   }
 
   const { task_name, task_description, task_notes, task_plan, task_appAcronym, task_creator, task_owner } = req.body;
@@ -137,6 +143,11 @@ exports.promoteTask2ToDo = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const { task_id, task_appAcronym, task_owner } = req.body;
 
   if (!task_id || !task_appAcronym || !task_owner) {
@@ -176,6 +187,11 @@ exports.promoteTask2ToDo = async (req, res, next) => {
 exports.promoteTask2Doing = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
+  }
+
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
   }
 
   const { task_id, task_appAcronym, task_owner } = req.body;
@@ -219,6 +235,11 @@ exports.demoteTask2ToDo = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const { task_id, task_appAcronym, task_owner } = req.body;
 
   if (!task_id || !task_appAcronym || !task_owner) {
@@ -260,13 +281,18 @@ exports.promoteTask2Done = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const { task_id, task_appAcronym, task_owner } = req.body;
 
   if (!task_id || !task_appAcronym || !task_owner) {
     return res.status(400).json({ message: "Task_ID, Task_App_Acronym, and Task_Owner must be provided." });
   }
 
-  const [group] = await pool.execute(`SELECT app_permitDoing FROM application WHERE app_acronym = ?`, [task_appAcronym]);
+  const [group] = await pool.execute(`SELECT app_permitDoing, app_permitDone FROM application WHERE app_acronym = ?`, [task_appAcronym]);
   const isAuthorized = await checkGroup(req.user.username, [group[0].app_permitDoing]);
   if (!isAuthorized) {
     return res.status(403).json({ message: "Access denied. Insufficient permissions." });
@@ -288,7 +314,8 @@ exports.promoteTask2Done = async (req, res, next) => {
     await auditTrail(task_id, req.user.username, task_state.done, "promote");
     await pool.query(`COMMIT;`);
 
-    res.status(200).json({ success: true, message: "Task has been promoted from Doing to Done successfully." });
+    res.status(200).json({ success: true, alert: true, message: `Email sent to member in the '${group[0].app_permitDone}' group requesting for review. ` });
+    triggerEmail(task_id);
   } catch (error) {
     await pool.query(`ROLLBACK;`);
     return res.status(500).json({ message: "Failed to promote task." });
@@ -299,6 +326,11 @@ exports.promoteTask2Done = async (req, res, next) => {
 exports.demoteTask2Doing = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
+  }
+
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
   }
 
   const { task_id, task_appAcronym, task_owner } = req.body;
@@ -341,6 +373,11 @@ exports.promoteTask2Close = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const { task_id, task_appAcronym, task_owner } = req.body;
 
   if (!task_id || !task_appAcronym || !task_owner) {
@@ -381,6 +418,11 @@ exports.updateTaskPlan = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const { task_id, task_plan, task_appAcronym, task_owner } = req.body;
 
   if (!task_id || !task_plan || !task_appAcronym || !task_owner) {
@@ -419,6 +461,11 @@ exports.updateTaskPlan = async (req, res, next) => {
 exports.updateNotes = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
+  }
+
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
   }
 
   const { task_id, task_notes, task_appAcronym, task_owner } = req.body;
@@ -464,6 +511,50 @@ function getCurrentDate() {
 function getCurrentDateTime() {
   const date = new Date();
   return date.toLocaleString("en-SG", { timeZone: "Asia/Singapore", hour12: false }) + " UTC+08";
+}
+
+async function triggerEmail(task_id) {
+  try {
+    const [creatorRow] = await pool.execute(`SELECT task_creator, task_name FROM task WHERE task_id = ?`, [task_id]);
+
+    if (creatorRow.length === 0) {
+      console.error("Task does not exists.");
+      return;
+    }
+
+    const taskCreator = creatorRow[0].task_creator;
+    const taskName = creatorRow[0].task_name;
+
+    const [emailRow] = await pool.execute(`SELECT email FROM users WHERE username = ?`, [taskCreator]);
+
+    if (emailRow.length === 0) {
+      console.error("User does not exists.");
+      return;
+    }
+
+    const recipientEmail = emailRow[0].email;
+
+    const emailContent = {
+      from: "Task Management System <noreply@tms.com>",
+      to: recipientEmail,
+      subject: "Task Review Required",
+      text: `The task '${taskName}' has been promoted to 'Done' state and requires your review.\n\nTask Management System`
+    };
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.YOUR_MAILTRAP_HOST,
+      port: process.env.YOUR_MAILTRAP_PORT,
+      auth: {
+        user: process.env.YOUR_MAILTRAP_USERNAME,
+        pass: process.env.YOUR_MAILTRAP_PASSWORD
+      }
+    });
+
+    const info = await transporter.sendMail(emailContent);
+    console.log("Email sent:", info.messageId);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 // Get one task (get task detail)

@@ -26,6 +26,11 @@ exports.createApp = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const isAuthorized = await checkGroup(req.user.username, ["PROJECT_LEAD"]);
 
   if (!isAuthorized) {
@@ -71,6 +76,11 @@ exports.createApp = async (req, res, next) => {
 exports.editApp = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
+  }
+
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
   }
 
   const isAuthorized = await checkGroup(req.user.username, ["PROJECT_LEAD"]);
@@ -120,8 +130,8 @@ exports.getPermitGroups = async (req, res, next) => {
       [app_acronym]
     );
 
-    if(rows.length === 0) {
-      return res.status(404).json({ message: "Application not found." })
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Application not found." });
     }
 
     const permitGroups = rows[0];
@@ -130,12 +140,12 @@ exports.getPermitGroups = async (req, res, next) => {
       app_permitOpen: permitGroups.app_permitOpen || null,
       app_permitToDoList: permitGroups.app_permitToDoList || null,
       app_permitDoing: permitGroups.app_permitDoing || null,
-      app_permitDone: permitGroups.app_permitDone || null,
+      app_permitDone: permitGroups.app_permitDone || null
     };
 
-    res.status(200).json({ success: true, permits, message: "Successfully fetched permit groups." })
+    res.status(200).json({ success: true, permits, message: "Successfully fetched permit groups." });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to get permit groups." })
+    return res.status(500).json({ message: "Failed to get permit groups." });
   }
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DatePicker from "react-datepicker";
@@ -8,12 +8,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import { ChromePicker } from "react-color";
 import { parse, format } from "date-fns";
 import { fetchUserDetails } from "../utils/fetchUserDetails";
+import { forceLogout } from "../utils/forceLogout";
 import Navbar from "../components/Navbar";
 import Select from "react-select";
 import "./TaskList.css";
-// DO EMAIL, DO NOTES
 
 function TaskList() {
+  const navigate = useNavigate();
   const location = useLocation();
   const { appAcronym } = location.state || {};
   const [userDetails, setUserDetails] = useState({ username: "", isAuthorized: false });
@@ -114,6 +115,10 @@ function TaskList() {
       try {
         const data = await fetchUserDetails();
         setUserDetails({ username: data.user.username, isAuthorized: data.isAuthorized });
+        if (!data.user.active) {
+          await forceLogout(navigate);
+          return;
+        }
         fetchSelfGroup();
         fetchAppPermits();
         loadTasks();
@@ -125,7 +130,7 @@ function TaskList() {
     };
 
     initializeUserProfile();
-  }, [loadTasks, loadPlans, fetchAppPermits]);
+  }, [navigate, loadTasks, loadPlans, fetchAppPermits]);
 
   const isPermitPM = () => {
     return userGroups.includes("PROJECT_MANAGER");
@@ -324,6 +329,10 @@ function TaskList() {
         await axios.patch("http://localhost:3007/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
       const response = await axios.patch(apiEndpoint, { task_id: selectedTask.task_id, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
+
+      if (response.data.alert) {
+        alert(response.data.message);
+      }
 
       if (response.data.success) {
         toast.success(response.data.message);

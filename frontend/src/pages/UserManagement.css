@@ -39,10 +39,10 @@
 .create-user-table .select-active,
 .create-user-table .css-yk16xz-control {
   width: 100%;
-  max-width: 100%; 
+  max-width: 100%;
   height: 2rem;
   margin: 0;
-  border: 1px solid #333; 
+  border: 1px solid #333;
   border-radius: 4px;
   padding: 5px;
   box-sizing: border-box;
@@ -55,6 +55,7 @@
 .create-user-table button {
   margin: 0 auto;
   display: inline-block;
+  width: 130px;
 }
 
 .display-users-section {
@@ -102,7 +103,7 @@
   max-width: 100%;
   height: 2rem;
   margin: 0;
-  border: 1px solid #333; 
+  border: 1px solid #333;
   border-radius: 4px;
   padding: 5px;
   box-sizing: border-box;
@@ -144,7 +145,7 @@ button:disabled {
 }
 
 .display-users-section table td button + button:hover {
-  background-color: #e6e6e6; 
+  background-color: #e6e6e6;
 }
 
 .modal-overlay {
@@ -162,7 +163,7 @@ button:disabled {
   padding: 20px;
   margin: 5% auto;
   width: 40%;
-  max-height: 20vh;
+  max-height: 25vh;
   border-radius: 5px;
 }
 

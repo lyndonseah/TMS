@@ -32,6 +32,11 @@ exports.createPlan = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const isAuthorized = await checkGroup(req.user.username, ["PROJECT_MANAGER"]);
 
   if (!isAuthorized) {
@@ -79,6 +84,11 @@ exports.editPlan = async (req, res, next) => {
     return res.status(401).json({ message: "Authentication required." });
   }
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [req.user.username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   const isAuthorized = await checkGroup(req.user.username, ["PROJECT_MANAGER"]);
 
   if (!isAuthorized) {
@@ -89,10 +99,6 @@ exports.editPlan = async (req, res, next) => {
 
   if (!plan_mvpName || !plan_startDate || !plan_endDate || !plan_appAcronym || !plan_colour) {
     return res.status(400).json({ message: "Plan_MVP_Name, Plan_Startdate, Plan_Enddate, Plan_App_Acronym, and Plan_Colour are mandatory fields." });
-  }
-
-  if (!validateDate(plan_startDate) || !validateDate(plan_endDate)) {
-    return res.status(400).json({ message: "Date should be in valid DD-MM-YYYY format." });
   }
 
   try {

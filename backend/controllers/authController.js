@@ -33,10 +33,15 @@ exports.login = async (req, res, next) => {
     }
 
     const user = rows[0];
+
+    if(user.active === 0 ) {
+      return res.status(403).json({ message: "Your account is disabled, please contact IT." })
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return next(new ErrorHandler("Invalid credentials.", 400));
+      return res.status(400).json({ message: "Invalid credentials" })
     }
 
     const isAuthorized = await checkGroup(username, ["ADMIN"]);
@@ -68,7 +73,7 @@ exports.login = async (req, res, next) => {
       token
     });
   } catch (error) {
-    return next(new ErrorHandler("Login failed.", 500));
+    return res.status(500).json({ message: "Login failed." })
   }
 };
 

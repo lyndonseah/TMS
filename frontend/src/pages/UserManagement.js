@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { fetchUserDetails } from "../utils/fetchUserDetails";
+import { forceLogout } from "../utils/forceLogout";
 import Navbar from "../components/Navbar";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
@@ -24,23 +25,14 @@ function UserManagement() {
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
 
-  const forceLogout = useCallback(async () => {
-    try {
-      await axios.post("http://localhost:3007/api/logout", {}, { withCredentials: true });
-    } catch (error) {
-    } finally {
-      navigate("/login");
-    }
-  }, [navigate]);
-
   async function checkUserAdmin() {
     try {
       const data = await fetchUserDetails();
-      if (!data.isAuthorized) {
-        forceLogout();
+      if (!data.isAuthorized || data.user.active !== 1) {
+        await forceLogout(navigate);
       }
     } catch (error) {
-      forceLogout();
+      await forceLogout(navigate);
     }
   }
 
@@ -94,8 +86,8 @@ function UserManagement() {
       try {
         const data = await fetchUserDetails();
 
-        if (!data.isAuthorized) {
-          forceLogout();
+        if (!data.isAuthorized || data.user.active !== 1) {
+          await forceLogout(navigate);
           return;
         }
 
@@ -109,7 +101,7 @@ function UserManagement() {
     };
 
     initializeUserProfile();
-  }, [forceLogout]);
+  }, [navigate]);
 
   const handleCreateUser = async () => {
     checkUserAdmin();
@@ -242,20 +234,20 @@ function UserManagement() {
     try {
       if (changes.active !== undefined) {
         await axios.patch(
-          "http://localhost:3007/api/users/disable",
+          "http://localhost:3007/api/users/update-status",
           {
             username: user.username,
             active: user.active
           },
           { withCredentials: true }
         );
-        toast.success("User have been disabled successfully.");
+        toast.success("User's status have been updated successfully.");
       }
     } catch (error) {
       if (error.response && error.response.data) {
         toast.error(error.response.data.message);
       } else {
-        toast.error("Failed to disable user.");
+        toast.error("Failed to update user's status.");
       }
     }
 

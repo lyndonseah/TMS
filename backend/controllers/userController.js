@@ -17,7 +17,7 @@ exports.getUser = async (req, res, next) => {
   const username = req.user.username;
 
   try {
-    const [rows] = await pool.execute("SELECT username, email FROM users WHERE username = ?", [username]);
+    const [rows] = await pool.execute("SELECT username, email, active FROM users WHERE username = ?", [username]);
 
     if (rows.length === 0) {
       return next(new ErrorHandler("User not found", 404));
@@ -116,7 +116,7 @@ exports.createUser = async (req, res, next) => {
 };
 
 // Controller to enable/disable user
-exports.disableUser = async (req, res, next) => {
+exports.updateUserStatus = async (req, res, next) => {
   if (!req.user) {
     return next(new ErrorHandler("Authentication required.", 401));
   }
@@ -126,21 +126,21 @@ exports.disableUser = async (req, res, next) => {
     return next(new ErrorHandler("Access denied. Insufficient permissions.", 403));
   }
 
-  const { username } = req.body;
+  const { username, active } = req.body;
 
   if (!username) {
     return next(new ErrorHandler("Username must be provided.", 400));
   }
 
   try {
-    const [rows] = await pool.execute("UPDATE users SET active = 0 WHERE username = ?", [username]);
+    const [rows] = await pool.execute("UPDATE users SET active = ? WHERE username = ?", [active, username]);
     if (rows.affectedRows === 0) {
       return next(new ErrorHandler("User not found.", 404));
     }
 
-    res.status(200).json({ message: `User '${username}' has been disabled successfully.`, success: true });
+    res.status(200).json({ message: `User '${username}' active status changed successfully.`, success: true });
   } catch (error) {
-    return next(new ErrorHandler("Failed to disable user.", 500));
+    return next(new ErrorHandler("Failed to change user's active status.", 500));
   }
 };
 
@@ -217,6 +217,11 @@ exports.updateEmail = async (req, res, next) => {
   const { newEmail } = req.body;
   const username = req.user.username;
 
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
+
   if (!newEmail) {
     return next(new ErrorHandler("Email must be provided.", 400));
   }
@@ -251,6 +256,11 @@ exports.updatePassword = async (req, res, next) => {
 
   const { password } = req.body;
   const username = req.user.username;
+
+  const [isActive] = await pool.execute(`SELECT active FROM users WHERE username = ?`, [username]);
+  if (!isActive[0].active) {
+    return res.status(403).json({ message: "You do not have permission, your account was disabled." });
+  }
 
   if (password && (password.length < 8 || password.length > 10)) {
     return res.status(400).json({ message: "Password must be 8-10 characters." });
