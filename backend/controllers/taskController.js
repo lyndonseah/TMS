@@ -34,9 +34,97 @@ async function auditTrail(task_id, username, task_state, action, notes = "") {
       auditEntry = `>${username} performed an action on the task, current task state at ${task_state}, at ${dateTime}.`;
   }
 
-  auditEntry = auditEntry + "ͻ";
+  auditEntry = auditEntry + "ͻͻ";
 
   await pool.query(`UPDATE task SET task_notes = CONCAT(?, IFNULL(task_notes, '')) WHERE task_id = ?`, [auditEntry, task_id]);
+}
+
+function getCurrentDate() {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const year = today.getFullYear();
+
+  return `${day}-${month}-${year}`;
+}
+
+function getCurrentDateTime() {
+  const date = new Date();
+  return date.toLocaleString("en-SG", { timeZone: "Asia/Singapore", hour12: false }) + " UTC+08";
+}
+
+async function triggerEmail(task_id) {
+  try {
+    const [taskRow] = await pool.query(`SELECT task_name, task_appAcronym FROM task WHERE task_id = ?`, [task_id]);
+    if (taskRow.length === 0) {
+      console.error("Task does not exist.");
+      return;
+    }
+
+    const taskName = taskRow[0].task_name;
+    const taskAppAcronym = taskRow[0].task_appAcronym;
+
+    const [appRow] = await pool.query(`SELECT app_permitDone FROM application WHERE app_acronym = ?`, [taskAppAcronym]);
+    if (appRow.length === 0) {
+      console.error("Application does not exist.");
+      return;
+    }
+
+    const appPermitDoneGroup = appRow[0].app_permitDone;
+    if (!appPermitDoneGroup) {
+      console.error("Application does not have app_permitDone group assigned.");
+      return;
+    }
+
+    const [groupRow] = await pool.query(`SELECT group_id FROM group_list WHERE group_name = ?`, [appPermitDoneGroup]);
+    if (groupRow.length === 0) {
+      console.error(`Group '${appPermitDoneGroup}' does not exist in group_list.`);
+      return;
+    }
+
+    const groupId = groupRow[0].group_id;
+
+    const [usersInGroup] = await pool.query(`SELECT username FROM user_group WHERE group_id = ?`, [groupId]);
+    if (usersInGroup.length === 0) {
+      console.error(`No users found in group '${appPermitDoneGroup}'.`);
+      return;
+    }
+
+    const usernames = usersInGroup.map(row => row.username);
+
+    const [emailRows] = await pool.query(`SELECT email FROM users WHERE username IN (?)`, [usernames]);
+    if (emailRows.length === 0) {
+      console.error("No emails found for users in app_permitDone group.");
+      return;
+    }
+
+    const recipientEmails = emailRows.map(row => row.email).filter(email => email);
+    if (recipientEmails.length === 0) {
+      console.error("No valid emails found for users in app_permitDone group.");
+      return;
+    }
+
+    const emailContent = {
+      from: "Task Management System <noreply@tms.com>",
+      to: recipientEmails.join(","),
+      subject: "Task Review Required",
+      text: `The task '${taskName}' has been promoted to 'Done' state and requires your review.\n\nTask Management System`
+    };
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.YOUR_MAILTRAP_HOST,
+      port: process.env.YOUR_MAILTRAP_PORT,
+      auth: {
+        user: process.env.YOUR_MAILTRAP_USERNAME,
+        pass: process.env.YOUR_MAILTRAP_PASSWORD
+      }
+    });
+
+    const info = await transporter.sendMail(emailContent);
+    console.log("Email sent:", info.messageId);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 // Get tasks by state (to display one by one, each column)
@@ -64,7 +152,7 @@ exports.getTasksByState = async (req, res, next) => {
       return res.status(200).json({ success: true, rows, message: "No task(s) in this state." });
     }
 
-    res.status(200).json({ sucess: true, rows, message: "Task(s) fetched successfully." });
+    res.status(200).json({ success: true, rows, message: "Task(s) fetched successfully." });
   } catch (error) {
     return res.status(500).json({ message: "Failed to get task(s) by state." });
   }
@@ -100,12 +188,6 @@ exports.createTask = async (req, res, next) => {
 
     if (acronymRows.length === 0) {
       return res.status(404).json({ message: "App_Acronym does not exists." });
-    }
-
-    const [task_name_rows] = await pool.execute(`SELECT task_name FROM task WHERE task_name = ? AND task_appAcronym = ?`, [task_name, task_appAcronym]);
-
-    if (task_name_rows.length > 0) {
-      return res.status(409).json({ message: "Task name already exists, choose another." });
     }
 
     const [app_rNumber] = await pool.query(`SELECT app_rNumber FROM application WHERE app_acronym = ?`, [task_appAcronym]);
@@ -286,7 +368,7 @@ exports.promoteTask2Done = async (req, res, next) => {
     return res.status(403).json({ message: "You do not have permission, your account was disabled." });
   }
 
-  const { task_id, task_appAcronym, task_owner } = req.body;
+  const { task_id, task_appAcronym } = req.body;
 
   if (!task_id || !task_appAcronym || !task_owner) {
     return res.status(400).json({ message: "Task_ID, Task_App_Acronym, and Task_Owner must be provided." });
@@ -314,7 +396,7 @@ exports.promoteTask2Done = async (req, res, next) => {
     await auditTrail(task_id, req.user.username, task_state.done, "promote");
     await pool.query(`COMMIT;`);
 
-    res.status(200).json({ success: true, alert: true, message: `Email sent to member in the '${group[0].app_permitDone}' group requesting for review. ` });
+    res.status(200).json({ success: true, message: `Email sent to member in the '${group[0].app_permitDone}' group requesting for review. ` });
     triggerEmail(task_id);
   } catch (error) {
     await pool.query(`ROLLBACK;`);
@@ -425,8 +507,8 @@ exports.updateTaskPlan = async (req, res, next) => {
 
   const { task_id, task_plan, task_appAcronym, task_owner } = req.body;
 
-  if (!task_id || !task_plan || !task_appAcronym || !task_owner) {
-    return res.status(400).json({ message: "Task ID, Task plan, Task App Acronym, and Task Owner must be provided." });
+  if (!task_id || !task_appAcronym || !task_owner) {
+    return res.status(400).json({ message: "Task ID, Task App Acronym, and Task Owner must be provided." });
   }
 
   const [group] = await pool.execute(`SELECT app_permitOpen, app_permitDone FROM application WHERE app_acronym = ?`, [task_appAcronym]);
@@ -439,7 +521,7 @@ exports.updateTaskPlan = async (req, res, next) => {
   try {
     await pool.query(`START TRANSACTION;`);
 
-    const [rows] = await pool.query(`UPDATE task SET task_plan = ?, task_owner = ? WHERE task_id = ?`, [task_plan, task_owner, task_id]);
+    const [rows] = await pool.query(`UPDATE task SET task_plan = ?, task_owner = ? WHERE task_id = ?`, [task_plan || null, task_owner, task_id]);
 
     if (rows.affectedRows === 0) {
       return res.status(404).json({ message: "No update performed or task not found." });
@@ -497,65 +579,6 @@ exports.updateNotes = async (req, res, next) => {
     return res.status(500).json({ message: "Failed to update notes." });
   }
 };
-
-// Function to get current date
-function getCurrentDate() {
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, "0");
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const year = today.getFullYear();
-
-  return `${day}-${month}-${year}`;
-}
-
-function getCurrentDateTime() {
-  const date = new Date();
-  return date.toLocaleString("en-SG", { timeZone: "Asia/Singapore", hour12: false }) + " UTC+08";
-}
-
-async function triggerEmail(task_id) {
-  try {
-    const [creatorRow] = await pool.execute(`SELECT task_creator, task_name FROM task WHERE task_id = ?`, [task_id]);
-
-    if (creatorRow.length === 0) {
-      console.error("Task does not exists.");
-      return;
-    }
-
-    const taskCreator = creatorRow[0].task_creator;
-    const taskName = creatorRow[0].task_name;
-
-    const [emailRow] = await pool.execute(`SELECT email FROM users WHERE username = ?`, [taskCreator]);
-
-    if (emailRow.length === 0) {
-      console.error("User does not exists.");
-      return;
-    }
-
-    const recipientEmail = emailRow[0].email;
-
-    const emailContent = {
-      from: "Task Management System <noreply@tms.com>",
-      to: recipientEmail,
-      subject: "Task Review Required",
-      text: `The task '${taskName}' has been promoted to 'Done' state and requires your review.\n\nTask Management System`
-    };
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.YOUR_MAILTRAP_HOST,
-      port: process.env.YOUR_MAILTRAP_PORT,
-      auth: {
-        user: process.env.YOUR_MAILTRAP_USERNAME,
-        pass: process.env.YOUR_MAILTRAP_PASSWORD
-      }
-    });
-
-    const info = await transporter.sendMail(emailContent);
-    console.log("Email sent:", info.messageId);
-  } catch (error) {
-    console.error(error);
-  }
-}
 
 // Get one task (get task detail)
 // exports.getTask = async (req, res, next) => {

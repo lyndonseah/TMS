@@ -31,8 +31,8 @@ function AppList() {
     app_permitDone: null
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedApp, setSelectedApp] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedApp, setSelectedApp] = useState(null);
 
   const fetchGroups = async () => {
     try {
@@ -47,14 +47,12 @@ function AppList() {
     try {
       const response = await axios.get("http://localhost:3007/api/apps", { withCredentials: true });
       setApplications(response.data.rows);
-    } catch (error) {
-      toast.info("No applications found.");
-    }
+    } catch (error) {}
   };
 
-  const fetchSelfGroup = async () => {
+  const fetchOwnGroup = async () => {
     try {
-      const groupResponse = await axios.get("http://localhost:3007/api/group/self", { withCredentials: true });
+      const groupResponse = await axios.get("http://localhost:3007/api/group/own", { withCredentials: true });
       if (groupResponse.data.success) {
         setUserGroups(groupResponse.data.groups);
       } else {
@@ -74,10 +72,10 @@ function AppList() {
           await forceLogout(navigate);
           return;
         }
-        fetchApplications();
-        await fetchSelfGroup();
+        await fetchOwnGroup();
+        fetchApplications(); //changed the order but havent test
       } catch (error) {
-        toast.error("Failed to load user details.");
+        toast.error("Failed to load details.");
       }
     };
 
@@ -299,7 +297,7 @@ function AppList() {
                     app_permitDoing: null,
                     app_permitDone: null
                   });
-                  fetchSelfGroup();
+                  fetchOwnGroup();
                 }}
               >
                 Close
@@ -373,7 +371,7 @@ function AppList() {
                 onClick={() => {
                   setIsEditModalOpen(false);
                   setSelectedApp(null);
-                  fetchSelfGroup();
+                  fetchOwnGroup();
                 }}
               >
                 Close

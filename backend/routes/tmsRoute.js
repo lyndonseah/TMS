@@ -8,6 +8,11 @@ const planController = require("../controllers/planController");
 const taskController = require("../controllers/taskController");
 const verifyToken = require("../middlewares/verifyToken");
 
+// Assignment 3
+const createTaskController = require("../controllers/createTaskController");
+const getTaskController = require("../controllers/getTaskController");
+const promoteTaskController = require("../controllers/promoteTaskController");
+
 // Authentication Routes
 router.post("/login", authController.login);
 router.get("/logout", authController.logout);
@@ -23,7 +28,7 @@ router.patch("/users/update-password", verifyToken.verifyTokenAccess, userContro
 
 // Group Controller Routes
 router.post("/group", verifyToken.verifyTokenAccess, groupController.getUserGroup);
-router.get("/group/self", verifyToken.verifyTokenAccess, groupController.getSelfGroup);
+router.get("/group/own", verifyToken.verifyTokenAccess, groupController.getOwnGroup);
 router.get("/groups", verifyToken.verifyTokenAccess, groupController.getGroups);
 router.post("/groups/create", verifyToken.verifyTokenAccess, groupController.createGroup);
 router.patch("/groups/assign", verifyToken.verifyTokenAccess, groupController.assignGroup);
@@ -53,5 +58,10 @@ router.patch("/tasks/promote-done-close", verifyToken.verifyTokenAccess, taskCon
 router.patch("/tasks/demote-done-doing", verifyToken.verifyTokenAccess, taskController.demoteTask2Doing);
 router.patch("/tasks/update-plan", verifyToken.verifyTokenAccess, taskController.updateTaskPlan);
 router.patch("/tasks/update-notes", verifyToken.verifyTokenAccess, taskController.updateNotes);
+
+// Assignment 3 controller
+router.post("/task/createTask", createTaskController.createTask);
+router.post("/task/getTaskByState", getTaskController.getTaskByState);
+router.post("/task/promoteTask2Done", promoteTaskController.promoteTask2Done);
 
 module.exports = router;

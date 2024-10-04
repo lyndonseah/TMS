@@ -25,7 +25,7 @@ exports.getUserGroup = async (req, res, next) => {
 };
 
 // Controller to get your group
-exports.getSelfGroup = async (req, res, next) => {
+exports.getOwnGroup = async (req, res, next) => {
   if (!req.user) {
     return next(new ErrorHandler("Authentication required", 401));
   }

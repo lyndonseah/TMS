@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const { checkGroup } = require("./authController");
+const { parse } = require("date-fns");
 
 // Get all plans
 exports.getPlans = async (req, res, next) => {
@@ -47,6 +48,13 @@ exports.createPlan = async (req, res, next) => {
 
   if (!plan_mvpName || !plan_startDate || !plan_endDate || !plan_appAcronym || !plan_colour) {
     return res.status(400).json({ message: "Plan_MVP_Name, Plan_Startdate, Plan_Enddate, and Plan_Colour are mandatory fields." });
+  }
+
+  const parsedStartDate = parse(plan_startDate, "dd-MM-yyyy", new Date());
+  const parsedEndDate = parse(plan_endDate, "dd-MM-yyyy", new Date());
+
+  if (parsedEndDate <= parsedStartDate) {
+    return res.status(400).json({ message: "End date must be later than Start date." });
   }
 
   try {

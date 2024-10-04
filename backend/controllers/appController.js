@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const { checkGroup } = require("./authController");
+const { parse } = require("date-fns");
 
 // Get all apps
 exports.getApps = async (req, res, next) => {
@@ -48,8 +49,19 @@ exports.createApp = async (req, res, next) => {
     return res.status(400).json({ message: "App_Acronym can only be alphanumeric and/or underscores." });
   }
 
-  if (app_rNumber <= 0) {
-    return res.status(400).json({ message: "App_Rnumber must be positive integer." });
+  const app_rNumberNum = Number(app_rNumber);
+
+  if (!Number.isInteger(app_rNumberNum) || app_rNumberNum <= 0) {
+    return res.status(400).json({
+      message: "App_Rnumber must be a positive integer."
+    });
+  }
+
+  const parsedStartDate = parse(app_startDate, "dd-MM-yyyy", new Date());
+  const parsedEndDate = parse(app_endDate, "dd-MM-yyyy", new Date());
+
+  if (parsedEndDate <= parsedStartDate) {
+    return res.status(400).json({ message: "End date must be later than Start date." });
   }
 
   try {

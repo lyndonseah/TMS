@@ -83,9 +83,9 @@ function TaskList() {
     } catch (error) {}
   }, [appAcronym]);
 
-  const fetchSelfGroup = async () => {
+  const fetchOwnGroup = async () => {
     try {
-      const groupResponse = await axios.get("http://localhost:3007/api/group/self", { withCredentials: true });
+      const groupResponse = await axios.get("http://localhost:3007/api/group/own", { withCredentials: true });
       if (groupResponse.data.success) {
         setUserGroups(groupResponse.data.groups || []);
       } else {
@@ -119,7 +119,7 @@ function TaskList() {
           await forceLogout(navigate);
           return;
         }
-        fetchSelfGroup();
+        fetchOwnGroup();
         fetchAppPermits();
         loadTasks();
         loadPlans();
@@ -295,10 +295,11 @@ function TaskList() {
     setSelectedTask(task);
     setOriginalTaskPlan(task.task_plan);
     setNewNotes("");
+    fetchOwnGroup();
     setIsViewModalOpen(true);
     loadPlans();
   };
-  // SEND EMAIL TO ALERT PL GROUP
+
   const handlePromoteTask = async () => {
     if (!selectedTask) return;
 
@@ -329,10 +330,6 @@ function TaskList() {
         await axios.patch("http://localhost:3007/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
       const response = await axios.patch(apiEndpoint, { task_id: selectedTask.task_id, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
-
-      if (response.data.alert) {
-        alert(response.data.message);
-      }
 
       if (response.data.success) {
         toast.success(response.data.message);
@@ -419,9 +416,38 @@ function TaskList() {
     return taskNotes.split("ͻ").join("\n").trim();
   }
 
-  const isPromoteDisabled = selectedTask ? selectedTask.task_state === "Close" : true;
+  const getPromoteButtonLabel = () => {
+    if (!selectedTask) return "Promote";
+    switch (selectedTask.task_state) {
+      case "Open":
+        return "Release Task";
+      case "ToDo":
+        return "Take On";
+      case "Doing":
+        return "Send Review";
+      case "Done":
+        return "Approve Task";
+      default:
+        return "Promote";
+    }
+  };
+
+  const getDemoteButtonLabel = () => {
+    if (!selectedTask) return "Demote";
+    switch (selectedTask.task_state) {
+      case "Doing":
+        return "Give Up";
+      case "Done":
+        return "Reject Task";
+      default:
+        return "Demote";
+    }
+  };
+
+  const hasPlanChanged = (selectedTask && selectedTask.task_plan) !== originalTaskPlan;
+  const isPromoteDisabled = selectedTask ? selectedTask.task_state === "Close" || (selectedTask.task_state === "Done" && hasPlanChanged) : true;
   const isDemoteDisabled = selectedTask && (selectedTask.task_state === "Open" || selectedTask.task_state === "ToDo" || selectedTask.task_state === "Close");
-  const isSaveDisabled = selectedTask ? selectedTask.task_state === "Close" : true;
+  const isSaveDisabled = selectedTask ? selectedTask.task_state === "Close" || hasPlanChanged : true;
   const canInteract = selectedTask ? canInteractWithTask(selectedTask.task_state) : false;
 
   return (
@@ -434,7 +460,7 @@ function TaskList() {
           </button>
         )}
         <div className="plan-button-container" onMouseEnter={handlePlanButtonMouseEnter} onMouseLeave={handlePlanButtonMouseLeave}>
-          {(isPermitPM() || canViewPlan()) && <button className="plan-button">Plan</button>}
+          <button className="plan-button">Plan</button>
           {isPlanDropdownOpen && (
             <div className="plan-dropdown">
               {plans.map(plan => (
@@ -510,7 +536,7 @@ function TaskList() {
                     task_notes: ""
                   });
                   setIsCreateModalOpen(false);
-                  fetchSelfGroup();
+                  fetchOwnGroup();
                 }}
               >
                 Cancel
@@ -568,10 +594,10 @@ function TaskList() {
             </div>
             <div className="view-task-modal-buttons">
               <button className="view-task-modal-button promote-button" onClick={handlePromoteTask} disabled={!canInteract || isPromoteDisabled}>
-                Promote
+                {getPromoteButtonLabel()}
               </button>
               <button className="view-task-modal-button demote-button" onClick={handleDemoteTask} disabled={!canInteract || isDemoteDisabled}>
-                Demote
+                {getDemoteButtonLabel()}
               </button>
               <button className="view-task-modal-button-save-button" onClick={handleSaveChanges} disabled={!canInteract || isSaveDisabled}>
                 Save changes
@@ -580,7 +606,7 @@ function TaskList() {
                 className="view-task-modal-button close-button"
                 onClick={() => {
                   setIsViewModalOpen(false);
-                  fetchSelfGroup();
+                  fetchOwnGroup();
                 }}
               >
                 Close
@@ -635,7 +661,7 @@ function TaskList() {
                     plan_colour: "#000000"
                   });
                   setIsCreatePlanModalOpen(false);
-                  fetchSelfGroup();
+                  fetchOwnGroup();
                 }}
               >
                 Cancel
@@ -687,7 +713,7 @@ function TaskList() {
                 onClick={() => {
                   setSelectedPlan(null);
                   setIsEditPlanModalOpen(false);
-                  fetchSelfGroup();
+                  fetchOwnGroup();
                 }}
               >
                 Cancel
