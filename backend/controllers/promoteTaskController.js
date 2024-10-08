@@ -3,11 +3,11 @@ const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 
 const validTaskState = {
-  open: "Open",
-  todo: "ToDo",
-  doing: "Doing",
-  done: "Done",
-  close: "Close"
+  open: "open",
+  todo: "todo",
+  doing: "doing",
+  done: "done",
+  close: "close"
 };
 
 const bodyCode = {
@@ -25,12 +25,12 @@ const bodyCode = {
 
   // Payload
   payload1: "P001", // Missing mandatory keys
-  payload2: "P002", // Invalid values
-  payload3: "P003", // Value out of range
-  payload4: "P004", // Task state error
 
   // Transaction
-  trans1: "T001" // Transaction update error
+  trans1: "T001", // Invalid values
+  trans2: "T002", // Value out of range
+  trans3: "T003", // Task state error
+  trans4: "T004" // Transaction error
 };
 
 async function auditTrail(task_id, username, task_state, action, notes = "") {
@@ -167,42 +167,42 @@ exports.promoteTask2Done = async (req, res, next) => {
     return res.status(400).json({ code: bodyCode.payload1 }); // missing mandatory keys
   }
 
-  const [userRows] = await pool.execute("SELECT password, active FROM users WHERE username = ?", [username]);
-  if (userRows.length === 0) {
-    return res.status(404).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
-  }
-
-  const user = userRows[0];
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(400).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
-  }
-
-  if (!user.active) {
-    return res.status(403).json({ code: bodyCode.auth2 }); // user not active
-  }
-
-  const [taskRow] = await pool.query(`SELECT task_id, task_state, task_appAcronym FROM task WHERE task_id = ?`, [task_id]);
-  if (taskRow.length === 0) {
-    return res.status(404).json({ code: bodyCode.payload2 }); // invalid value
-  }
-
-  const task = taskRow[0];
-
-  if (task.task_state !== validTaskState.doing) {
-    return res.status(400).json({ code: bodyCode.payload4 }); // task state error
-  }
-
-  const [group] = await pool.execute(`SELECT app_permitDoing, app_permitDone FROM application WHERE app_acronym = ?`, [task.task_appAcronym]);
-  const isAuthorized = await checkGroup(username, [group[0].app_permitDoing]);
-  if (!isAuthorized) {
-    return res.status(403).json({ code: bodyCode.auth3 }); // insufficient group permission
-  }
-
-  const task_owner = username;
-
   try {
+    const [userRows] = await pool.execute("SELECT password, active FROM users WHERE username = ?", [username]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
+    }
+
+    const user = userRows[0];
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
+    }
+
+    if (!user.active) {
+      return res.status(403).json({ code: bodyCode.auth2 }); // user not active
+    }
+
+    const [taskRow] = await pool.query(`SELECT task_id, task_state, task_appAcronym FROM task WHERE task_id = ?`, [task_id]);
+    if (taskRow.length === 0) {
+      return res.status(404).json({ code: bodyCode.trans1 }); // invalid value
+    }
+
+    const task = taskRow[0];
+
+    if (task.task_state !== validTaskState.doing) {
+      return res.status(400).json({ code: bodyCode.trans3 }); // task state error
+    }
+
+    const [group] = await pool.execute(`SELECT app_permitDoing, app_permitDone FROM application WHERE app_acronym = ?`, [task.task_appAcronym]);
+    const isAuthorized = await checkGroup(username, [group[0].app_permitDoing]);
+    if (!isAuthorized) {
+      return res.status(403).json({ code: bodyCode.auth3 }); // insufficient group permission
+    }
+
+    const task_owner = username;
+
     await pool.query(`START TRANSACTION;`);
 
     const [rows] = await pool.query(
@@ -212,16 +212,16 @@ exports.promoteTask2Done = async (req, res, next) => {
     );
 
     if (rows.affectedRows === 0) {
-      return res.status(400).json({ code: bodyCode.trans1 }); // transaction update error
+      return res.status(400).json({ code: bodyCode.trans4 }); // transaction error
     }
 
     await auditTrail(task_id, task_owner, validTaskState.done, "promote");
     await pool.query(`COMMIT;`);
 
-    res.status(200).json({ code: bodyCode.generalSuccess });
+    res.status(200).json({ code: bodyCode.generalSuccess }); // success
     triggerEmail(task_id);
   } catch (error) {
     await pool.query(`ROLLBACK;`);
-    return res.status(500).json({ code: bodyCode.generalError });
+    return res.status(500).json({ code: bodyCode.generalError }); // internal server error
   }
 };

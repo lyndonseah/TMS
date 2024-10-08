@@ -36,7 +36,7 @@ function AppList() {
 
   const fetchGroups = async () => {
     try {
-      const groupResponse = await axios.get("http://localhost:3007/api/groups", { withCredentials: true });
+      const groupResponse = await axios.get("http://localhost:3000/api/groups", { withCredentials: true });
       setGroups(groupResponse.data.rows.map(group => ({ label: group.group_name, value: group.group_name })));
     } catch (error) {
       toast.error("Failed to fetch groups.");
@@ -45,14 +45,14 @@ function AppList() {
 
   const fetchApplications = async () => {
     try {
-      const response = await axios.get("http://localhost:3007/api/apps", { withCredentials: true });
+      const response = await axios.get("http://localhost:3000/api/apps", { withCredentials: true });
       setApplications(response.data.rows);
     } catch (error) {}
   };
 
   const fetchOwnGroup = async () => {
     try {
-      const groupResponse = await axios.get("http://localhost:3007/api/group/own", { withCredentials: true });
+      const groupResponse = await axios.get("http://localhost:3000/api/group/own", { withCredentials: true });
       if (groupResponse.data.success) {
         setUserGroups(groupResponse.data.groups);
       } else {
@@ -94,7 +94,7 @@ function AppList() {
   const handleCreateApp = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3007/api/apps/create",
+        "http://localhost:3000/api/apps/create",
         {
           app_acronym: newApp.app_acronym,
           app_description: newApp.app_description || null,
@@ -155,7 +155,7 @@ function AppList() {
   const handleEditApp = async () => {
     try {
       const response = await axios.patch(
-        "http://localhost:3007/api/apps/edit",
+        "http://localhost:3000/api/apps/edit",
         {
           app_acronym: selectedApp.app_acronym,
           app_description: selectedApp.app_description || null,

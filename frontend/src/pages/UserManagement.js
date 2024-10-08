@@ -38,12 +38,12 @@ function UserManagement() {
 
   const fetchAllUsers = async () => {
     try {
-      const userResponse = await axios.get("http://localhost:3007/api/users", { withCredentials: true });
+      const userResponse = await axios.get("http://localhost:3000/api/users", { withCredentials: true });
       if (userResponse.data.success && userResponse.data.rows) {
         const usersWithData = await Promise.all(
           userResponse.data.rows.map(async user => {
             try {
-              const groupResponse = await axios.post("http://localhost:3007/api/group", { username: user.username }, { withCredentials: true });
+              const groupResponse = await axios.post("http://localhost:3000/api/group", { username: user.username }, { withCredentials: true });
               const groupsFormatted = groupResponse.data.groups.map(groupName => ({
                 label: groupName,
                 value: groupName
@@ -74,7 +74,7 @@ function UserManagement() {
 
   const fetchGroups = async () => {
     try {
-      const groupResponse = await axios.get("http://localhost:3007/api/groups", { withCredentials: true });
+      const groupResponse = await axios.get("http://localhost:3000/api/groups", { withCredentials: true });
       setGroups(groupResponse.data.rows.map(group => ({ label: group.group_name, value: group.group_id })));
     } catch (error) {
       toast.error("Failed to fetch groups.");
@@ -119,10 +119,10 @@ function UserManagement() {
 
     setIsSubmitting(true);
     try {
-      const createUserResponse = await axios.post("http://localhost:3007/api/users/create", { username, password, email }, { withCredentials: true });
+      const createUserResponse = await axios.post("http://localhost:3000/api/users/create", { username, password, email }, { withCredentials: true });
       console.log(createUserResponse.data);
       if (selectedGroups.length > 0) {
-        await axios.patch("http://localhost:3007/api/groups/assign", { username: createUserResponse.data.username, group_names: selectedGroups.map(group => group.label) }, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/groups/assign", { username: createUserResponse.data.username, group_names: selectedGroups.map(group => group.label) }, { withCredentials: true });
       }
 
       toast.success("User created successfully.");
@@ -156,7 +156,7 @@ function UserManagement() {
     }
 
     try {
-      const response = await axios.post("http://localhost:3007/api/groups/create", { group_name: newGroupName }, { withCredentials: true });
+      const response = await axios.post("http://localhost:3000/api/groups/create", { group_name: newGroupName }, { withCredentials: true });
       if (response.data.success) {
         toast.success("Group created successfully");
         setIsCreateGroupModalOpen(false);
@@ -220,7 +220,7 @@ function UserManagement() {
         if (changes.password) data.password = changes.password;
         if (changes.email) data.email = changes.email;
 
-        await axios.patch("http://localhost:3007/api/users/reset", data, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/users/reset", data, { withCredentials: true });
         toast.success("Password and/or Email updated successfully.");
       }
     } catch (error) {
@@ -234,7 +234,7 @@ function UserManagement() {
     try {
       if (changes.active !== undefined) {
         await axios.patch(
-          "http://localhost:3007/api/users/update-status",
+          "http://localhost:3000/api/users/update-status",
           {
             username: user.username,
             active: user.active
@@ -254,7 +254,7 @@ function UserManagement() {
     try {
       if (groupsChanged) {
         await axios.patch(
-          "http://localhost:3007/api/groups/assign",
+          "http://localhost:3000/api/groups/assign",
           {
             username: user.username,
             group_names: user.groups.map(group => group.label)

@@ -62,6 +62,6 @@ router.patch("/tasks/update-notes", verifyToken.verifyTokenAccess, taskControlle
 // Assignment 3 controller
 router.post("/task/createTask", createTaskController.createTask);
 router.post("/task/getTaskByState", getTaskController.getTaskByState);
-router.post("/task/promoteTask2Done", promoteTaskController.promoteTask2Done);
+router.patch("/task/promoteTask2Done", promoteTaskController.promoteTask2Done);
 
 module.exports = router;

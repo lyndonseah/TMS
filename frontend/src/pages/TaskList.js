@@ -46,7 +46,7 @@ function TaskList() {
   const fetchTasksByState = useCallback(
     async state => {
       try {
-        const response = await axios.post("http://localhost:3007/api/tasks", { task_state: state, task_appAcronym: appAcronym }, { withCredentials: true });
+        const response = await axios.post("http://localhost:3000/api/tasks", { task_state: state, task_appAcronym: appAcronym }, { withCredentials: true });
         return response.data.rows;
       } catch (error) {
         toast.error(error.message);
@@ -70,7 +70,7 @@ function TaskList() {
 
   const loadPlans = useCallback(async () => {
     try {
-      const response = await axios.post("http://localhost:3007/api/plans", { plan_appAcronym: appAcronym }, { withCredentials: true });
+      const response = await axios.post("http://localhost:3000/api/plans", { plan_appAcronym: appAcronym }, { withCredentials: true });
       setPlans(
         response.data.rows.map(plan => ({
           label: plan.plan_mvpName,
@@ -85,7 +85,7 @@ function TaskList() {
 
   const fetchOwnGroup = async () => {
     try {
-      const groupResponse = await axios.get("http://localhost:3007/api/group/own", { withCredentials: true });
+      const groupResponse = await axios.get("http://localhost:3000/api/group/own", { withCredentials: true });
       if (groupResponse.data.success) {
         setUserGroups(groupResponse.data.groups || []);
       } else {
@@ -98,7 +98,7 @@ function TaskList() {
 
   const fetchAppPermits = useCallback(async () => {
     try {
-      const response = await axios.post("http://localhost:3007/api/apps/permit", { app_acronym: appAcronym }, { withCredentials: true });
+      const response = await axios.post("http://localhost:3000/api/apps/permit", { app_acronym: appAcronym }, { withCredentials: true });
 
       if (response.data.success) {
         setAppPermits(response.data.permits);
@@ -202,7 +202,7 @@ function TaskList() {
   const handleCreatePlan = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3007/api/plans/create",
+        "http://localhost:3000/api/plans/create",
         {
           ...newPlan,
           plan_appAcronym: appAcronym,
@@ -233,7 +233,7 @@ function TaskList() {
   const handleEditPlan = async () => {
     try {
       const response = await axios.patch(
-        "http://localhost:3007/api/plans/edit",
+        "http://localhost:3000/api/plans/edit",
         {
           plan_mvpName: selectedPlan.value,
           plan_appAcronym: appAcronym,
@@ -273,7 +273,7 @@ function TaskList() {
     }
 
     try {
-      const response = await axios.post("http://localhost:3007/api/tasks/create", { ...newTask, task_appAcronym: appAcronym, task_creator: userDetails.username, task_owner: userDetails.username }, { withCredentials: true });
+      const response = await axios.post("http://localhost:3000/api/tasks/create", { ...newTask, task_appAcronym: appAcronym, task_creator: userDetails.username, task_owner: userDetails.username }, { withCredentials: true });
       if (response.data.success) {
         toast.success(response.data.message);
         setNewTask({ task_name: "", task_description: "", task_plan: "", task_notes: "" });
@@ -306,16 +306,16 @@ function TaskList() {
     let apiEndpoint = "";
     switch (selectedTask.task_state) {
       case "Open":
-        apiEndpoint = "http://localhost:3007/api/tasks/promote-open-todo";
+        apiEndpoint = "http://localhost:3000/api/tasks/promote-open-todo";
         break;
       case "ToDo":
-        apiEndpoint = "http://localhost:3007/api/tasks/promote-todo-doing";
+        apiEndpoint = "http://localhost:3000/api/tasks/promote-todo-doing";
         break;
       case "Doing":
-        apiEndpoint = "http://localhost:3007/api/tasks/promote-doing-done";
+        apiEndpoint = "http://localhost:3000/api/tasks/promote-doing-done";
         break;
       case "Done":
-        apiEndpoint = "http://localhost:3007/api/tasks/promote-done-close";
+        apiEndpoint = "http://localhost:3000/api/tasks/promote-done-close";
         break;
       default:
         toast.error("Cannot promote task in this state.");
@@ -324,10 +324,10 @@ function TaskList() {
 
     try {
       if ((selectedTask.task_state === "Open" || selectedTask.task_state === "Done") && selectedTask.task_plan !== originalTaskPlan) {
-        await axios.patch("http://localhost:3007/api/tasks/update-plan", { task_id: selectedTask.task_id, task_plan: selectedTask.task_plan, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/tasks/update-plan", { task_id: selectedTask.task_id, task_plan: selectedTask.task_plan, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
       if (newNotes.trim() !== "") {
-        await axios.patch("http://localhost:3007/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
       const response = await axios.patch(apiEndpoint, { task_id: selectedTask.task_id, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
 
@@ -353,10 +353,10 @@ function TaskList() {
     let apiEndpoint = "";
     switch (selectedTask.task_state) {
       case "Doing":
-        apiEndpoint = "http://localhost:3007/api/tasks/demote-doing-todo";
+        apiEndpoint = "http://localhost:3000/api/tasks/demote-doing-todo";
         break;
       case "Done":
-        apiEndpoint = "http://localhost:3007/api/tasks/demote-done-doing";
+        apiEndpoint = "http://localhost:3000/api/tasks/demote-done-doing";
         break;
       default:
         toast.error("Cannot demote task in this state.");
@@ -365,10 +365,10 @@ function TaskList() {
 
     try {
       if (selectedTask.task_state === "Done" && selectedTask.task_plan !== originalTaskPlan) {
-        await axios.patch("http://localhost:3007/api/tasks/update-plan", { task_id: selectedTask.task_id, task_plan: selectedTask.task_plan, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/tasks/update-plan", { task_id: selectedTask.task_id, task_plan: selectedTask.task_plan, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
       if (newNotes.trim() !== "") {
-        await axios.patch("http://localhost:3007/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
       const response = await axios.patch(apiEndpoint, { task_id: selectedTask.task_id, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
 
@@ -393,10 +393,10 @@ function TaskList() {
 
     try {
       if ((selectedTask.task_state === "Open" || selectedTask.task_state === "Done") && selectedTask.task_plan !== originalTaskPlan) {
-        await axios.patch("http://localhost:3007/api/tasks/update-plan", { task_id: selectedTask.task_id, task_plan: selectedTask.task_plan, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/tasks/update-plan", { task_id: selectedTask.task_id, task_plan: selectedTask.task_plan, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
       if (newNotes.trim() !== "") {
-        await axios.patch("http://localhost:3007/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
+        await axios.patch("http://localhost:3000/api/tasks/update-notes", { task_id: selectedTask.task_id, task_notes: newNotes, task_appAcronym: appAcronym, task_owner: userDetails.username }, { withCredentials: true });
       }
 
       toast.success("Task changes saved successfully.");

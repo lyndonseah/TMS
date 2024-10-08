@@ -42,7 +42,7 @@ const UserProfile = () => {
       return;
     }
     try {
-      const response = await axios.patch("http://localhost:3007/api/users/update-email", { newEmail: email }, { withCredentials: true });
+      const response = await axios.patch("http://localhost:3000/api/users/update-email", { newEmail: email }, { withCredentials: true });
       if (response.data.success) {
         setUserDetails(prevState => ({ ...prevState, email }));
         setEmail("");
@@ -67,7 +67,7 @@ const UserProfile = () => {
       return;
     }
     try {
-      const response = await axios.patch("http://localhost:3007/api/users/update-password", { password }, { withCredentials: true });
+      const response = await axios.patch("http://localhost:3000/api/users/update-password", { password }, { withCredentials: true });
       if (response.data.success) {
         setPassword("");
         toast.success("Password has been updated");

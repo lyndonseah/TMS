@@ -2,21 +2,21 @@ const pool = require("../config/database");
 const bcrypt = require("bcryptjs");
 
 const validTaskState = {
-  open: "Open",
-  todo: "ToDo",
-  doing: "Doing",
-  done: "Done",
-  close: "Close"
+  open: "open",
+  todo: "todo",
+  doing: "doing",
+  done: "done",
+  close: "close"
 };
 
 const bodyCode = {
   // Generic success/error
   generalSuccess: "S001", // Success
   generalError: "E001", // Internal Server Error
-  
+
   // URL
   url1: "U001", // URL don't match
-  
+
   // Authentication
   auth1: "A001", // Username does not exist or Invalid credentials
   auth2: "A002", // User not active
@@ -24,10 +24,13 @@ const bodyCode = {
 
   // Payload
   payload1: "P001", // Missing mandatory keys
-  payload2: "P002", // Invalid values
-  payload3: "P003", // Value out of range
-  payload4: "P004" // Task state error
-}
+
+  // Transaction
+  trans1: "T001", // Invalid values
+  trans2: "T002", // Value out of range
+  trans3: "T003", // Task state error
+  trans4: "T004" // Transaction error
+};
 
 async function auditTrail(task_id, username, task_state, action, notes = "") {
   const dateTime = getCurrentDateTime();
@@ -98,53 +101,53 @@ exports.createTask = async (req, res, next) => {
     return res.status(400).json({ code: bodyCode.payload1 }); // missing mandatory keys
   }
 
-  const [userRows] = await pool.execute("SELECT password, active FROM users WHERE username = ?", [username]);
-  if (userRows.length === 0) {
-    return res.status(404).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
-  }
-
-  const user = userRows[0];
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(400).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
-  }
-
-  if (!user.active) {
-    return res.status(403).json({ code: bodyCode.auth2 }); // user not active
-  }
-
-  const [acronymRows] = await pool.execute(`SELECT app_acronym FROM application WHERE app_acronym = ?`, [task_appAcronym]);
-  if (acronymRows.length === 0) {
-    return res.status(404).json({ code: bodyCode.payload2 }); // invalid values
-  }
-
-  const [group] = await pool.execute(`SELECT app_permitCreate FROM application WHERE app_acronym = ?`, [task_appAcronym]);
-  const isAuthorized = await checkGroup(username, [group[0].app_permitCreate]);
-  if (!isAuthorized) {
-    return res.status(403).json({ code: bodyCode.auth3 }); // insufficient group permission
-  }
-
-  if (task_name.length > 64) {
-    return res.status(400).json({ code: bodyCode.payload3 }); // value out of range
-  }
-
-  if (task_description && task_description.length > 255) {
-    return res.status(400).json({ code: bodyCode.payload3 }); // value out of range
-  }
-
-  if (task_notes && task_notes.length > 65535) {
-    return res.status(400).json({ code: bodyCode.payload3 }); // value out of range
-  }
-
-  if (task_plan) {
-    const [planRow] = await pool.execute(`SELECT plan_mvpName FROM plan WHERE plan_mvpName = ? AND plan_appAcronym = ?`, [task_plan, task_appAcronym]);
-    if (planRow.length === 0) {
-      return res.status(404).json({ code: bodyCode.payload2 }); // invalid value
-    }
-  }
-
   try {
+    const [userRows] = await pool.execute("SELECT password, active FROM users WHERE username = ?", [username]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
+    }
+
+    const user = userRows[0];
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ code: bodyCode.auth1 }); // account don't exist / invalid credentials
+    }
+
+    if (!user.active) {
+      return res.status(403).json({ code: bodyCode.auth2 }); // user not active
+    }
+
+    const [group] = await pool.execute(`SELECT app_permitCreate FROM application WHERE app_acronym = ?`, [task_appAcronym]);
+    const isAuthorized = await checkGroup(username, [group[0].app_permitCreate]);
+    if (!isAuthorized) {
+      return res.status(403).json({ code: bodyCode.auth3 }); // insufficient group permission
+    }
+
+    const [acronymRows] = await pool.execute(`SELECT app_acronym FROM application WHERE app_acronym = ?`, [task_appAcronym]);
+    if (acronymRows.length === 0) {
+      return res.status(404).json({ code: bodyCode.trans1 }); // invalid values
+    }
+
+    if (task_name.length > 64) {
+      return res.status(400).json({ code: bodyCode.trans2 }); // value out of range
+    }
+
+    if (task_description && task_description.length > 255) {
+      return res.status(400).json({ code: bodyCode.trans2 }); // value out of range
+    }
+
+    if (task_notes && task_notes.length > 65535) {
+      return res.status(400).json({ code: bodyCode.trans2 }); // value out of range
+    }
+
+    if (task_plan) {
+      const [planRow] = await pool.execute(`SELECT plan_mvpName FROM plan WHERE plan_mvpName = ? AND plan_appAcronym = ?`, [task_plan, task_appAcronym]);
+      if (planRow.length === 0) {
+        return res.status(404).json({ code: bodyCode.trans1 }); // invalid value
+      }
+    }
+
     await pool.query(`START TRANSACTION;`);
 
     const [app_rNumber] = await pool.query(`SELECT app_rNumber FROM application WHERE app_acronym = ?`, [task_appAcronym]);
@@ -166,11 +169,12 @@ exports.createTask = async (req, res, next) => {
     await auditTrail(task_id, task_owner, validTaskState.open, "create", task_notes);
     await pool.query(`COMMIT;`);
 
-    res.status(201).json({ code: bodyCode.generalSuccess }); // success
+    res.status(201).json({ task_id, code: bodyCode.generalSuccess }); // success
   } catch (error) {
     await pool.query(`ROLLBACK;`);
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({ code: bodyCode.trans4 }); // transaction error
+    }
     return res.status(500).json({ code: bodyCode.generalError }); // internal server error
   }
 };
-
-
