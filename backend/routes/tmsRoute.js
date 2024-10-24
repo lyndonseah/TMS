@@ -13,11 +13,11 @@ const createTaskController = require("../controllers/createTaskController");
 const getTaskController = require("../controllers/getTaskController");
 const promoteTaskController = require("../controllers/promoteTaskController");
 
-// Authentication Routes
+// // Authentication Routes
 router.post("/login", authController.login);
 router.get("/logout", authController.logout);
 
-// User Controller Routes
+// // User Controller Routes
 router.get("/user", verifyToken.verifyTokenAccess, userController.getUser);
 router.get("/users", verifyToken.verifyTokenAccess, userController.getUsers);
 router.post("/users/create", verifyToken.verifyTokenAccess, userController.createUser);

@@ -22,9 +22,12 @@ const bodyCode = {
 
   // Payload
   payload1: "P001", // Missing mandatory keys
-  payload2: "P002", // Invalid values
-  payload3: "P003", // Value out of range
-  payload4: "P004" // Task state error
+
+  // Transaction
+  trans1: "T001", // Invalid values
+  trans2: "T002", // Value out of range
+  trans3: "T003", // Task state error
+  trans4: "T004" // Transaction error
 };
 
 const app = express();
@@ -33,7 +36,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3007",
     credentials: true
   })
 );
@@ -47,5 +50,5 @@ app.use(errorMiddleware);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
-  console.log(`Server started on port ${process.env.PORT} in ${process.env.NODE_ENV} mode.`);
+  console.log(`Server started on port ${process.env.PORT} in mode.`);
 });

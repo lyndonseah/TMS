@@ -102,6 +102,7 @@ function TaskList() {
 
       if (response.data.success) {
         setAppPermits(response.data.permits);
+        console.log("Fetched app permits:", response.data.permits);
       } else {
         toast.error(response.data.message);
       }
@@ -120,7 +121,7 @@ function TaskList() {
           return;
         }
         fetchOwnGroup();
-        fetchAppPermits();
+        await fetchAppPermits();
         loadTasks();
         loadPlans();
       } catch (error) {
@@ -168,7 +169,6 @@ function TaskList() {
       default:
         permitGroup = null;
     }
-
     return permitGroup && userGroups.includes(permitGroup);
   };
 
@@ -447,7 +447,7 @@ function TaskList() {
   const hasPlanChanged = (selectedTask && selectedTask.task_plan) !== originalTaskPlan;
   const isPromoteDisabled = selectedTask ? selectedTask.task_state === "Close" || (selectedTask.task_state === "Done" && hasPlanChanged) : true;
   const isDemoteDisabled = selectedTask && (selectedTask.task_state === "Open" || selectedTask.task_state === "ToDo" || selectedTask.task_state === "Close");
-  const isSaveDisabled = selectedTask ? selectedTask.task_state === "Close" || hasPlanChanged : true;
+  const isSaveDisabled = selectedTask ? selectedTask.task_state === "Close" || (selectedTask.task_state === "Done" && hasPlanChanged) : true;
   const canInteract = selectedTask ? canInteractWithTask(selectedTask.task_state) : false;
 
   return (

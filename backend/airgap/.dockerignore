@@ -1,0 +1,48 @@
+# Exclude node_modules from the build context
+node_modules
+
+# Exclude build artifacts
+build
+dist
+
+# Exclude Git and other version control directories
+.git
+.gitignore
+.gitmodules
+
+# Exclude Docker files
+Dockerfile
+.dockerignore
+
+# Exclude logs and temp files
+npm-debug.log
+yarn-error.log
+*.log
+*.tmp
+temp
+
+# Exclude IDE and editor config files
+.vscode
+.idea
+*.iml
+
+# Exclude documentation and markdown files
+*.md
+README*
+LICENSE
+
+# Exclude environment files
+.env
+.env.*
+
+# Exclude test files
+test
+tests
+coverage
+
+# Exclude backup files
+*.swp
+*.swo
+
+# Exclude base image tarball
+base_image.tar
