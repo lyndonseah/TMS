@@ -42,3 +42,6 @@ temp/
 *.pid
 *.seed
 *.pid.lock
+
+*.tar
+*.tgz
