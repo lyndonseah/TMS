@@ -15,7 +15,7 @@ const promoteTaskController = require("../controllers/promoteTaskController");
 
 // // Authentication Routes
 router.post("/login", authController.login);
-router.get("/logout", authController.logout);
+router.get("/logout-user", authController.logout);
 
 // // User Controller Routes
 router.get("/user", verifyToken.verifyTokenAccess, userController.getUser);

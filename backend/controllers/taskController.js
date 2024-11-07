@@ -16,16 +16,16 @@ async function auditTrail(task_id, username, task_state, action, notes = "") {
 
   switch (action) {
     case "create":
-      auditEntry = `>${username} created the task, current task state at ${task_state}, at ${dateTime}.`;
+      auditEntry = `>${username} created the task, current task state at ${task_state}, at ${dateTime}.ͻNotes entry: "${notes}"`;
       break;
     case "promote":
-      auditEntry = `>${username} promoted the task, current task state at ${task_state}, at ${dateTime}.`;
+      auditEntry = `>${username} promoted the task, current task state at ${task_state}, at ${dateTime}.ͻNotes entry: "${notes}"`;
       break;
     case "demote":
-      auditEntry = `>${username} demoted the task, current task state at ${task_state}, at ${dateTime}.`;
+      auditEntry = `>${username} demoted the task, current task state at ${task_state}, at ${dateTime}.ͻNotes entry: "${notes}"`;
       break;
     case "update-plan":
-      auditEntry = `>${username} updated task plan when task state at ${task_state}, at ${dateTime}.`;
+      auditEntry = `>${username} updated task plan when task state at ${task_state}, at ${dateTime}.ͻNotes entry: "${notes}"`;
       break;
     case "update-notes":
       auditEntry = `>${username} updated task notes when task state at ${task_state}, at ${dateTime}.ͻNotes entry: "${notes}"`;
@@ -495,6 +495,7 @@ exports.promoteTask2Close = async (req, res, next) => {
   }
 };
 
+// Update task plan
 exports.updateTaskPlan = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
@@ -540,6 +541,7 @@ exports.updateTaskPlan = async (req, res, next) => {
   }
 };
 
+// Update notes
 exports.updateNotes = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Authentication required." });
