@@ -8,7 +8,7 @@ function Dropdown({ isAuthorized }) {
 
   const handleLogout = async () => {
     try {
-      await axios.get("http://localhost:3007/api/logout", { withCredentials: true });
+      await axios.get("http://localhost:3000/api/logout-user", { withCredentials: true });
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
